@@ -1,0 +1,61 @@
+import {
+  CalendarCheck,
+  CircleUser,
+  ClipboardList,
+  FileCheck2,
+  FileDown,
+  Gauge,
+  Gift,
+  Inbox,
+  Landmark,
+  LayoutDashboard,
+  ListTree,
+  type LucideIcon,
+  Palette,
+  PhoneCall,
+  PieChart,
+  ScrollText,
+  Settings,
+  Shuffle,
+  Swords,
+  Target,
+  Trophy,
+  UserPlus,
+  UserRoundCheck,
+  UserCog,
+  Users,
+  Wallet,
+} from "lucide-react";
+import type { NavIcon as NavIconName } from "@/lib/nav";
+
+const ICONS: Record<NavIconName, LucideIcon> = {
+  today: PhoneCall,
+  pipeline: ListTree,
+  arena: Swords,
+  leaderboard: Trophy,
+  sessions: CalendarCheck,
+  team: Users,
+  queue: Inbox,
+  dashboard: LayoutDashboard,
+  leads: ClipboardList,
+  addLeads: UserPlus,
+  assign: UserRoundCheck,
+  distribution: Shuffle,
+  deposits: Wallet,
+  documents: FileCheck2,
+  reports: PieChart,
+  exports: FileDown,
+  users: UserCog,
+  brokers: Landmark,
+  targets: Target,
+  prizes: Gift,
+  settings: Settings,
+  audit: ScrollText,
+  profile: CircleUser,
+  styleguide: Palette,
+};
+
+export function NavIcon({ name, className }: { name: NavIconName; className?: string }) {
+  const Icon = ICONS[name] ?? Gauge;
+  return <Icon aria-hidden className={className} />;
+}
