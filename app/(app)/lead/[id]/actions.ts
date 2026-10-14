@@ -5,6 +5,7 @@ import { PermissionError, requireActor } from "@/lib/auth/actor";
 import { ROLES } from "@/lib/auth/roles";
 import { describeWhen } from "@/lib/format/dates";
 import type { ActionState } from "@/lib/forms";
+import { CHANNEL_LABEL, isTemperature, LOGGABLE_CHANNELS, TEMPERATURE_LABEL, type Temperature } from "@/lib/leads/contact";
 import {
   CALL_OUTCOMES,
   decideCall,
@@ -49,6 +50,17 @@ async function record(e: Event) {
     p_no_answer_increment: e.noAnswerIncrement ?? 0,
     p_release_agent: e.releaseAgent ?? false,
   });
+  if (error) {
+    throw new EventError(
+      error.code === "P0001" || error.code === "42501" ? error.message : "That could not be saved. Try again.",
+    );
+  }
+}
+
+/** Hot, warm or cold, through the database (it checks who may work the lead and writes the log). */
+async function applyTemperature(leadId: string, temperature: Temperature) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_lead_temperature", { p_lead_id: leadId, p_temperature: temperature });
   if (error) {
     throw new EventError(
       error.code === "P0001" || error.code === "42501" ? error.message : "That could not be saved. Try again.",
@@ -130,6 +142,9 @@ export async function logCall(_prev: ActionState, formData: FormData): Promise<A
       noAnswerIncrement: decision.noAnswerIncrement,
       releaseAgent: decision.releaseAgent,
     });
+    // The interest picked in the sheet is saved with the call. The call is already safe if this fails.
+    const interest = String(formData.get("temperature") ?? "");
+    if (isTemperature(interest)) await applyTemperature(leadId, interest);
     refresh();
 
     let message: string;
@@ -232,5 +247,41 @@ export async function returnToPool(_prev: ActionState, formData: FormData): Prom
     });
     refresh();
     return { ok: true, message: "Back in the pool, ready to distribute again." };
+  });
+}
+
+/** Set how willing the lead is to invest: Hot, Warm or Cold. */
+export async function setInterest(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  return run(async () => {
+    const leadId = readLeadId(formData);
+    const value = String(formData.get("temperature") ?? "");
+    if (!isTemperature(value)) throw new LeadRuleError("Choose Hot, Warm or Cold.", "temperature");
+    await applyTemperature(leadId, value);
+    refresh();
+    return { ok: true, message: `Interest set to ${TEMPERATURE_LABEL[value]}.` };
+  });
+}
+
+/** A WhatsApp, message or email to the lead, with the interest level if the agent picked one. */
+export async function logContact(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  return run(async () => {
+    const leadId = readLeadId(formData);
+    const channel = String(formData.get("channel") ?? "");
+    if (!(LOGGABLE_CHANNELS as readonly string[]).includes(channel)) {
+      throw new LeadRuleError("Choose how you contacted them.", "channel");
+    }
+    const supabase = await createClient();
+    const { error } = await supabase.rpc("log_contact", {
+      p_lead_id: leadId,
+      p_channel: channel,
+      p_notes: readText(formData, "notes", 2000) || null,
+    });
+    if (error) {
+      throw new EventError(error.code === "P0001" || error.code === "42501" ? error.message : "That could not be saved. Try again.");
+    }
+    const interest = String(formData.get("temperature") ?? "");
+    if (isTemperature(interest)) await applyTemperature(leadId, interest);
+    refresh();
+    return { ok: true, message: `${CHANNEL_LABEL[channel as keyof typeof CHANNEL_LABEL]} logged.` };
   });
 }

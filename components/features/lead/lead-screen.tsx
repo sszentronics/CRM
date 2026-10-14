@@ -4,23 +4,27 @@ import {
   ArrowRightLeft,
   CalendarClock,
   Info,
+  Mail,
   MessageCircle,
+  MessageSquareText,
   Phone,
   PhoneCall,
   StickyNote,
   UserRoundCheck,
 } from "lucide-react";
-import { useActionState, useState, type CSSProperties } from "react";
+import { useActionState, useState, useTransition, type CSSProperties } from "react";
 import {
   addNote,
   confirmInvalid,
   logWhatsApp,
   moveStage,
   rejectInvalid,
+  setInterest,
   returnToPool,
 } from "@/app/(app)/lead/[id]/actions";
 import { FollowUpPicker } from "@/components/features/calls/follow-up-picker";
 import { LogCallSheet } from "@/components/features/calls/log-call-sheet";
+import { LogContactSheet } from "@/components/features/calls/log-contact-sheet";
 import { DepositSheet } from "@/components/features/deposits/deposit-sheet";
 import { DepositsPanel, type DepositRow } from "@/components/features/deposits/deposits-panel";
 import type { DocumentRow } from "@/components/features/kyc/checklist";
@@ -29,13 +33,16 @@ import { ReferSheet, type AnalystLoad } from "@/components/features/sessions/ref
 import { SessionPanel, type SessionRow } from "@/components/features/sessions/session-panel";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
+import { ContactChip, InterestChip } from "@/components/ui/contact-chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Sheet } from "@/components/ui/sheet";
 import { StageChip } from "@/components/ui/stage-chip";
 import { Tabs } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/toast";
 import { describeWhen, formatKarachi, timeAgo } from "@/lib/format/dates";
 import { formatPhone } from "@/lib/format/phone";
 import { useActionToast } from "@/lib/hooks/use-action-toast";
+import { TEMPERATURES, TEMPERATURE_LABEL, isTemperature, type ContactChannel, type Temperature } from "@/lib/leads/contact";
 import { isOpenStage, MOVE_BUTTONS, OUTCOME_LABEL, type CallOutcome } from "@/lib/leads/stage-machine";
 import { canRefer } from "@/lib/sessions/rules";
 import { STAGE_LABEL, type Stage } from "@/lib/leads/stages";
@@ -60,6 +67,9 @@ export type LeadView = {
   returned_to_lead: boolean;
   agent_assigned_at: string | null;
   last_activity_at: string | null;
+  temperature: Temperature | null;
+  last_contacted_at: string | null;
+  last_contact_channel: ContactChannel | null;
   created_at: string;
   created_by: string | null;
   credited_analyst_id: string | null;
@@ -72,7 +82,7 @@ export type TimelineItem =
       id: string;
       created_at: string;
       user_id: string | null;
-      type: "call" | "whatsapp" | "note" | "stage_change" | "system";
+      type: "call" | "whatsapp" | "message" | "email" | "note" | "stage_change" | "system";
       outcome: CallOutcome | null;
       from_stage: Stage | null;
       to_stage: Stage | null;
@@ -201,6 +211,12 @@ function TimelineEntry({ item, names, teamNames }: { item: TimelineItem; names: 
   } else if (item.type === "whatsapp") {
     Icon = MessageCircle;
     title = "WhatsApp opened";
+  } else if (item.type === "message") {
+    Icon = MessageSquareText;
+    title = "Message sent";
+  } else if (item.type === "email") {
+    Icon = Mail;
+    title = "Email sent";
   } else if (item.type === "note") {
     Icon = StickyNote;
     title = "Note";
@@ -394,6 +410,44 @@ function NoteForm({ lead, toAgent }: { lead: LeadView; toAgent: boolean }) {
   );
 }
 
+/** Hot, Warm or Cold, saved the moment it is picked. Read-only text for people who cannot work the lead. */
+function InterestPicker({ lead, canEdit }: { lead: LeadView; canEdit: boolean }) {
+  const [pending, start] = useTransition();
+  const toast = useToast();
+  if (!canEdit) return <InterestChip temperature={lead.temperature} />;
+  return (
+    <label className="inline-flex items-center gap-2 text-label font-medium text-tl-text">
+      Willingness
+      <select
+        aria-label="Willingness level"
+        value={lead.temperature ?? ""}
+        disabled={pending}
+        onChange={(e) => {
+          const value = e.target.value;
+          if (!isTemperature(value)) return;
+          const fd = new FormData();
+          fd.set("leadId", lead.id);
+          fd.set("temperature", value);
+          start(async () => {
+            const r = await setInterest(null, fd);
+            toast(r?.message ?? "That could not be saved.", r?.ok ? "success" : "error");
+          });
+        }}
+        className="h-9 rounded-control border border-tl-line-strong bg-tl-surface px-2.5 text-body text-tl-text"
+      >
+        <option value="" disabled>
+          Not set
+        </option>
+        {TEMPERATURES.map((t) => (
+          <option key={t} value={t}>
+            {TEMPERATURE_LABEL[t]}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 function Detail({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex items-baseline justify-between gap-4 border-b border-tl-line py-2.5 last:border-b-0">
@@ -444,6 +498,7 @@ export function LeadScreen({
   const openSession = sessions.some((x) => !x.handed_back_at && !x.cancelled_at);
   const mayRefer = viewer.ownsLead && canRefer(lead.stage) && !openSession;
   const [calling, setCalling] = useState(0);
+  const [contacting, setContacting] = useState(0);
   const [recording, setRecording] = useState(0);
   const [move, setMove] = useState<{ to: Stage; label: string } | null>(null);
   const [rejecting, setRejecting] = useState(false);
@@ -505,6 +560,15 @@ export function LeadScreen({
             <Phone aria-hidden className="size-4" />
             Call
           </Button>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2" aria-label="Willingness and last contact">
+          <InterestPicker lead={lead} canEdit={viewer.canWork && !viewer.isAnalyst} />
+          <ContactChip lastContactedAt={lead.last_contacted_at} channel={lead.last_contact_channel} />
+          {viewer.canWork && !viewer.isAnalyst ? (
+            <Button size="sm" variant="secondary" onClick={() => setContacting((n) => n + 1)}>
+              Log a message
+            </Button>
+          ) : null}
         </div>
         <div
           className={cn(
@@ -686,6 +750,13 @@ export function LeadScreen({
         reasons={settings.reasons}
         open={calling > 0}
         onClose={() => setCalling(0)}
+      />
+      <LogContactSheet
+        key={`contact-${contacting}`}
+        lead={contacting > 0 ? lead : null}
+        open={contacting > 0}
+        onClose={() => setContacting(0)}
+        temperature={lead.temperature}
       />
       <MoveSheet key={`move-${move?.to ?? "none"}`} lead={lead} to={move?.to ?? null} label={move?.label ?? ""} onClose={() => setMove(null)} />
       <RejectInvalidSheet key={`reject-${rejecting}`} lead={lead} open={rejecting} onClose={() => setRejecting(false)} />

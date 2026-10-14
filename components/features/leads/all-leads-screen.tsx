@@ -8,10 +8,21 @@ import { assignLeads } from "@/app/(app)/team/assign/actions";
 import { PageHeader } from "@/components/features/shell/page-header";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { ContactChip, InterestChip } from "@/components/ui/contact-chip";
 import { StageChip } from "@/components/ui/stage-chip";
 import { useToast } from "@/components/ui/toast";
 import { timeAgo } from "@/lib/format/dates";
 import { formatPhone } from "@/lib/format/phone";
+import {
+  CHANNEL_LABEL,
+  CONTACT_CHANNELS,
+  FRESHNESS,
+  FRESHNESS_LABEL,
+  TEMPERATURES,
+  TEMPERATURE_LABEL,
+  type ContactChannel,
+  type Temperature,
+} from "@/lib/leads/contact";
 import { STAGE_LABEL, STAGES, type Stage } from "@/lib/leads/stages";
 import { teamColorVar, type TeamColor } from "@/lib/teams";
 import { PickTable, type PickColumn } from "./pick-table";
@@ -25,19 +36,34 @@ export type LeadListRow = {
   returned_to_lead: boolean;
   created_at: string;
   last_activity_at: string | null;
+  temperature: Temperature | null;
+  last_contacted_at: string | null;
+  last_contact_channel: ContactChannel | null;
   team_id: string | null;
   agent_id: string | null;
   team: { name: string; color: TeamColor } | null;
   agent: { full_name: string } | null;
 };
 
-type Filters = { stage: string; team: string; agent: string; source: string; q: string; returned: string };
+type Filters = {
+  stage: string;
+  team: string;
+  agent: string;
+  source: string;
+  q: string;
+  returned: string;
+  interest: string;
+  channel: string;
+  contact: string;
+};
 type SavedView = { name: string; query: string };
 
 const VIEWS_KEY = "tl.allLeads.views";
 const BUILT_IN: SavedView[] = [
   { name: "In the pool", query: "team=pool" },
   { name: "Returned to Team Leads", query: "returned=1" },
+  { name: "Hot leads", query: "interest=hot" },
+  { name: "Not contacted for 8+ days", query: "contact=red" },
   { name: "Waiting for verification", query: "stage=deposit_recorded" },
   { name: "Verified clients", query: "stage=deposit_verified" },
 ];
@@ -178,6 +204,7 @@ export function AllLeadsScreen({
     },
     { key: "phone", header: "Phone", cell: (r) => <span className="tl-amount">{formatPhone(r.phone)}</span> },
     { key: "stage", header: "Stage", cell: (r) => <StageChip stage={r.stage} /> },
+    { key: "interest", header: "Interest", cell: (r) => <InterestChip temperature={r.temperature} /> },
     {
       key: "team",
       header: "Team",
@@ -204,6 +231,11 @@ export function AllLeadsScreen({
         ),
     },
     { key: "source", header: "Source", cell: (r) => r.source },
+    {
+      key: "contact",
+      header: "Last contact",
+      cell: (r) => <ContactChip lastContactedAt={r.last_contacted_at} channel={r.last_contact_channel} />,
+    },
     {
       key: "activity",
       header: "Last activity",
@@ -335,6 +367,39 @@ export function AllLeadsScreen({
             {sources.map((s) => (
               <option key={s} value={s}>
                 {s}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-label font-medium text-tl-text">
+          Interest
+          <select value={filters.interest} onChange={(e) => go({ interest: e.target.value })} className={selectClass}>
+            <option value="">Any interest</option>
+            {TEMPERATURES.map((t) => (
+              <option key={t} value={t}>
+                {TEMPERATURE_LABEL[t]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-label font-medium text-tl-text">
+          Contacted by
+          <select value={filters.channel} onChange={(e) => go({ channel: e.target.value })} className={selectClass}>
+            <option value="">Any way</option>
+            {CONTACT_CHANNELS.map((c) => (
+              <option key={c} value={c}>
+                {CHANNEL_LABEL[c]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-label font-medium text-tl-text">
+          Last contact
+          <select value={filters.contact} onChange={(e) => go({ contact: e.target.value })} className={selectClass}>
+            <option value="">Any time</option>
+            {FRESHNESS.map((f) => (
+              <option key={f} value={f}>
+                {FRESHNESS_LABEL[f]}
               </option>
             ))}
           </select>

@@ -94,7 +94,7 @@ const NEEDS_NOTE: readonly CallOutcome[] = ["interested", "not_interested"];
 export class LeadRuleError extends Error {
   constructor(
     message: string,
-    readonly field?: "outcome" | "notes" | "followUpAt" | "reason",
+    readonly field?: "outcome" | "notes" | "followUpAt" | "reason" | "temperature" | "channel",
   ) {
     super(message);
     this.name = "LeadRuleError";

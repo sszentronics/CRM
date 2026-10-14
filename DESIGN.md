@@ -65,6 +65,11 @@ These three colours carry meaning and are never used as decoration.
 | `--tl-danger` | `#C8254A` | Overdue, rejected, errors. A red candle. |
 | `--tl-wait` | `#A35A00` | Waiting on someone: pending, due soon. |
 
+**Exception, asked for by the owner (12 Oct 2026):** the contact-freshness chip on leads uses its own three tokens,
+`--tl-fresh-green` (`#2E7D32`, 0 to 3 days since the last contact), `--tl-fresh-yellow` (`#8A6500`, 4 to 7 days) and
+`--tl-fresh-red` (`#C8254A`, 8 days or more). The chip always shows words too ("2d ago · WhatsApp"). `--tl-win` is still
+only for verified money.
+
 ### Stages
 
 A stage chip uses its colour as text, the same colour mixed at 10 percent with white as fill, and at 28 percent as border.

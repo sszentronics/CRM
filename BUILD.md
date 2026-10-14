@@ -648,6 +648,88 @@ Every end-to-end spec calls a shared helper `expectBrandPage(page)` (`tests/e2e/
 
 ---
 
+## Module 13: interest level and contact tracking
+
+**Goal:** the owner can see how keen each lead is and how recently each lead was contacted, and filter by both.
+
+**Build**
+
+- Migration: `leads.temperature`, `leads.last_contacted_at`, `leads.last_contact_channel`; `activities.type` gains `message` and `email`; a trigger stamps the lead on every contact activity.
+- `set_lead_temperature` and `log_contact` (security definer, `can_work_lead`), each writing the timeline and the audit log.
+- Lead page: Interest drop-down (Hot, Warm, Cold), contact chip, "Log a message" sheet (WhatsApp, Message, Email). The Log a call sheet also takes an interest level.
+- All leads (Admin and Superadmin): Interest and Last contact columns; filters for Interest, Contacted by and Last contact; saved views "Hot leads" and "Not contacted for 8+ days".
+
+**Rules**
+
+- The contact time is the server's time when saved. It cannot be backdated.
+- Freshness is calendar days in Karachi time since the last contact: 0 to 3 green, 4 to 7 yellow, 8 or more red. A lead nobody has contacted shows grey "Never contacted".
+- A call (any outcome), WhatsApp, message or email counts as contact. A note does not.
+- Only people who can work the lead (its agent, the team's Team Lead, an Admin) set the interest level or log contact. Analysts cannot.
+
+**Tests**
+
+- [ ] Unit: the freshness rule at 0, 3, 4, 7 and 8 days, in Karachi calendar days.
+- [ ] DB: an agent sets and changes the interest on their own lead and cannot on another agent's. Contact stamps the channel and server time. A note does not.
+- [ ] E2E: an agent sets Hot and logs a WhatsApp, and the chip is green. Day 5 is yellow and day 9 is red.
+- [ ] E2E: an Admin filters All leads by interest, contact type and last contact.
+
+**Done when**
+
+- [ ] The owner can ask "which hot leads have gone cold on contact?" in two clicks.
+
+---
+
+## Module 14: owner view, reassign and delete
+
+**Goal:** the owner sees which agent and team hold which leads, and can move or remove any lead.
+
+**Build**
+
+- "Lead ownership" screen (Superadmin, Admin): team cards that open to agents, each with lead counts by interest and by freshness colour, and the leads with no agent.
+- Reassign any lead, one or many, to any team or agent with a reason (builds on bulk reassign).
+- Soft delete: Admin and Superadmin hide leads from everyone else, with a reason. A "Deleted leads" view restores them. A lead with a recorded deposit cannot be deleted.
+
+**Tests**
+
+- [ ] DB: only `superadmin` and `admin` can delete or restore a lead; a deleted lead disappears for agents and Team Leads.
+- [ ] DB: a lead with a deposit cannot be deleted.
+- [ ] E2E: an Admin reassigns three leads and deletes one, then restores it.
+
+---
+
+## Module 15: everyone can add their own leads
+
+**Goal:** agents and Team Leads add leads they sourced themselves; each counts as theirs.
+
+**Build**
+
+- "Add my lead" form with source "Own / PR". The lead is created owned by the person adding it, in their team.
+- RLS: an agent may only insert a lead whose `agent_id` is themselves and whose `team_id` is their own.
+- A second attempt at a phone that exists adds nothing and says "That number is already in the system", with no owner shown. The Admin reassigns by hand.
+
+**Tests**
+
+- [ ] DB: an agent cannot insert a lead for another agent or team.
+- [ ] E2E: an agent adds a lead and sees it as theirs; a duplicate phone adds nothing.
+
+---
+
+## Module 16: activity log
+
+**Goal:** a complete record of what happened to every lead.
+
+**Build**
+
+- One append-only history per lead (a "History" tab) covering add or import, assignment and reassignment, delete and restore, interest changes, contacts and stage changes.
+- A global "Logs" screen (Superadmin, Admin) filtered by user, team, lead, event and date, in Karachi time, exportable through Module 11.
+
+**Tests**
+
+- [ ] DB: nobody can update or delete log rows; each event writes exactly one row.
+- [ ] DB: an agent sees only the history of leads they can see.
+
+---
+
 ## 9. Not in version 1
 
 Do not build these unless asked: automatic lead intake from Facebook, Instagram or TikTok forms, phone system links and call recording, reading CNIC details from the photo, WhatsApp or SMS reminders to clients, a native mobile app, commission reports, badges and monthly recap cards, Urdu.

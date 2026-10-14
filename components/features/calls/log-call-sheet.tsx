@@ -8,12 +8,14 @@ import { Sheet } from "@/components/ui/sheet";
 import { followUpQuickPicks } from "@/lib/format/dates";
 import { formatPhone } from "@/lib/format/phone";
 import { useActionToast } from "@/lib/hooks/use-action-toast";
+import type { Temperature } from "@/lib/leads/contact";
 import { OUTCOME_LABEL, outcomesFor, type CallOutcome } from "@/lib/leads/stage-machine";
 import type { Stage } from "@/lib/leads/stages";
 import { cn } from "@/lib/utils";
 import { FollowUpPicker } from "./follow-up-picker";
+import { InterestField } from "./interest-field";
 
-export type CallTarget = { id: string; full_name: string; phone: string; stage: Stage };
+export type CallTarget = { id: string; full_name: string; phone: string; stage: Stage; temperature?: Temperature | null };
 export type CallReasons = { notInterested: string[]; invalid: string[] };
 
 const ICON: Record<CallOutcome, typeof PhoneMissed> = {
@@ -50,6 +52,7 @@ export function LogCallSheet({
   const [followUp, setFollowUp] = useState<Date | null>(null);
   const [notes, setNotes] = useState("");
   const [reason, setReason] = useState("");
+  const [interest, setInterest] = useState<Temperature | "">(lead?.temperature ?? "");
   // Success toasts and closes; errors without a field toast too; field errors stay on the fields.
   useActionToast(state, onClose);
 
@@ -144,6 +147,8 @@ export function LogCallSheet({
         ) : null}
 
         {needsFollowUp ? <FollowUpPicker value={followUp} onChange={setFollowUp} error={errors.followUpAt?.[0]} /> : null}
+
+        <InterestField value={interest} onChange={setInterest} />
 
         <div className="flex flex-col gap-1">
           <label htmlFor={`${formId}-notes`} className="text-label font-medium text-tl-text">

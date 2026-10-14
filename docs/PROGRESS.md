@@ -877,3 +877,43 @@ tests in the copy because they use this machine's single local Supabase stack; t
 - **Today's calls** reached interactive in about 1.2 s on a quiet machine and 2.1 s on the demo data; the budget is 2.5 s.
 - The demo's names clashed with two test fixtures (a team name and the Admin's name). I renamed the fixtures in the Module 1
   database test and the demo Admin, not any app behaviour.
+
+## Module 13: interest level and contact tracking
+
+Built 12 Oct 2026. Modules 13 to 16 were added to `BUILD.md` first (owner request).
+
+### What was built
+
+- **Migration `20261012000000_interest_contact.sql`:** `leads.temperature` (hot, warm, cold), `leads.last_contacted_at`, `leads.last_contact_channel`; `activities.type` accepts `message` and `email`; a trigger stamps the lead on every call, WhatsApp, message or email; existing leads were backfilled from their calls and WhatsApp taps.
+- **Server:** `set_lead_temperature` and `log_contact` (security definer, same `can_work_lead` access check as calls; each writes the timeline and the audit log). Actions `setInterest` and `logContact`; `logCall` also saves an interest level picked in the sheet.
+- **Rule in `lib/leads/contact.ts`:** calendar days in Karachi time since the last contact; 0 to 3 green, 4 to 7 yellow, 8 or more red, never contacted grey.
+- **Lead page:** Willingness (Hot, Warm, Cold) drop-down, contact chip ("2d ago · WhatsApp"), "Log a message" sheet. The Log a call sheet has the Hot, Warm, Cold buttons.
+- **All leads (Admin, Superadmin):** Interest and Last contact columns; filters for Interest, Contacted by and Last contact; saved views "Hot leads" and "Not contacted for 8+ days".
+
+### Decisions to confirm
+
+- The contact time is the server's time at save, never typed in, because `BUILD.md` rule 5 says activities cannot be backdated.
+- A call counts as contact whatever its outcome (including No answer). A note does not.
+- Green and yellow are used for freshness, which `DESIGN.md` reserved for verified money; the exception is written into `DESIGN.md` section 3.
+- Labels on the lead page say "Willingness" so they do not clash with the analyst session form's "Interest" field.
+
+### Tests
+
+| Test | Result |
+| --- | --- |
+| Unit: freshness at 0, 3, 4, 7, 8 days, Karachi calendar days, list bounds agree with the colour rule | pass |
+| DB: set, change and repeat an interest level; invalid value; other agent's lead refused; Team Lead allowed; signed out refused | pass |
+| DB: contact stamps channel and server time; newest wins; unknown channel and other agent's lead refused; calls stamp; notes do not | pass |
+| E2E: agent sets Hot, logs a WhatsApp, chip is green; day 5 yellow, day 9 red; other agent's lead refused | pass |
+| E2E: Admin filters All leads by interest, contact type and last contact | pass |
+
+Totals: lint and typecheck clean, 133 unit tests, 304 database tests, 99 browser tests passing.
+
+### Done when
+
+- [x] The owner can ask "which hot leads have gone cold on contact?" in two clicks (Hot leads view, then Last contact filter).
+
+### Open items for you
+
+- Modules 14 to 16 (owner view with reassign and soft delete, agents adding their own leads, activity log) are written in `BUILD.md` and not started.
+- Not yet shown on the agent's pipeline or Today's calls cards, only on the lead page and All leads.

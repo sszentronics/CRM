@@ -38,6 +38,12 @@
   --tl-danger: #c8254a;
   --tl-wait: #a35a00;
 
+  /* Contact freshness, days since the last contact: 0 to 3 green, 4 to 7 yellow, 8 or more red.
+     The one use of green outside verified money, asked for by the owner (DESIGN.md section 3). */
+  --tl-fresh-green: #2e7d32;
+  --tl-fresh-yellow: #8a6500;
+  --tl-fresh-red: #c8254a;
+
   /* Stages (text colour; fill is 10%, border 28%) */
   --tl-stage-idle: #6b6385;
   --tl-stage-call: #a35a00;
@@ -92,6 +98,9 @@
   --color-tl-brand-muted: var(--tl-brand-muted);
   --color-tl-win: var(--tl-win);
   --color-tl-danger: var(--tl-danger);
+  --color-tl-fresh-green: var(--tl-fresh-green);
+  --color-tl-fresh-yellow: var(--tl-fresh-yellow);
+  --color-tl-fresh-red: var(--tl-fresh-red);
   --color-tl-wait: var(--tl-wait);
 
   --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
