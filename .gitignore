@@ -64,3 +64,8 @@ next-env.d.ts
 /.claude/
 
 lan-server.log
+
+# one-off helper output
+/push-*.bat
+push-log.txt
+reset-log.txt

@@ -1,0 +1,667 @@
+<title>Trading Labs Test Board</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: purple masthead with live progress, a scrolling row of tabs, then one checklist column of cards grouped into parts. */
+:root {
+  --bg: #f6f4fb;
+  --surface: #ffffff;
+  --ink: #1d1530;
+  --muted: #6b6280;
+  --line: #e4def0;
+  --brand: #220b47;
+  --brand-2: #4a2391;
+  --brand-soft: #ece6f8;
+  --on-brand: #ffffff;
+  --on-brand-muted: #c9bce6;
+  --pass: #137a4b;
+  --pass-soft: #e2f5ec;
+  --fail: #c0283b;
+  --fail-soft: #fbe6e9;
+  --skip: #8a6a00;
+  --skip-soft: #fbf1d3;
+  --info: #1d5fa8;
+  --info-soft: #e3eefb;
+  --focus: #7c4dff;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Figtree", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #120b1f; --surface: #1c1430; --ink: #efeaf9; --muted: #a79cc0; --line: #2f2548;
+    --brand: #2a1056; --brand-2: #b79bff; --brand-soft: #2a1f44; --on-brand: #ffffff; --on-brand-muted: #c9bce6;
+    --pass: #4fd394; --pass-soft: #12321f; --fail: #ff7a8a; --fail-soft: #3a1520; --skip: #f0c24a; --skip-soft: #3a2f10;
+    --info: #8cbcf5; --info-soft: #14263d; --focus: #b79bff; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #120b1f; --surface: #1c1430; --ink: #efeaf9; --muted: #a79cc0; --line: #2f2548;
+  --brand: #2a1056; --brand-2: #b79bff; --brand-soft: #2a1f44; --on-brand: #ffffff; --on-brand-muted: #c9bce6;
+  --pass: #4fd394; --pass-soft: #12321f; --fail: #ff7a8a; --fail-soft: #3a1520; --skip: #f0c24a; --skip-soft: #3a2f10;
+  --info: #8cbcf5; --info-soft: #14263d; --focus: #b79bff; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1000px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header.mast { background: var(--brand); color: var(--on-brand); }
+header.mast .wrap { padding-block: 28px 22px; display: grid; gap: 18px; }
+.mast-top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justify-content: space-between; }
+.mast h1 { font-family: var(--display); font-weight: 800; font-size: clamp(28px, 5vw, 40px); line-height: 1.05; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+.mast p { margin: 6px 0 0; color: var(--on-brand-muted); max-width: 62ch; }
+.tl-mark { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: #ffffff1f; font-family: var(--display); font-weight: 800; font-size: 17px; margin-bottom: 12px; letter-spacing: -0.02em; }
+.tally { display: flex; flex-wrap: wrap; gap: 8px; }
+.tally span { font-variant-numeric: tabular-nums; background: #ffffff14; border: 1px solid #ffffff26; border-radius: 999px; padding: 4px 12px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.tally b { font-weight: 800; }
+.tally .p b { color: #7ff0b5; } .tally .f b { color: #ffadb8; } .tally .s b { color: #ffe08a; }
+.bar { height: 10px; border-radius: 999px; background: #ffffff1f; overflow: hidden; display: flex; }
+.bar i { display: block; height: 100%; transition: width .4s ease; }
+.bar .bp { background: #4fd394; } .bar .bf { background: #ff7a8a; } .bar .bs { background: #f0c24a; }
+.sync { font-size: 12.5px; color: var(--on-brand-muted); }
+nav.tabs { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
+nav.tabs .wrap { display: flex; gap: 6px; overflow-x: auto; padding-block: 10px; scrollbar-width: thin; }
+.tab { flex: none; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 7px 14px; font: 600 14px var(--body); cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
+.tab .n { font-variant-numeric: tabular-nums; font-size: 12px; color: var(--muted); font-weight: 700; }
+.tab[aria-selected="true"] { background: var(--brand); color: var(--on-brand); border-color: var(--brand); }
+.tab[aria-selected="true"] .n { color: var(--on-brand-muted); }
+.tab .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--fail); }
+.tab.sep { margin-left: 8px; }
+main .wrap { padding-block: 22px 60px; display: grid; gap: 18px; }
+.section-head { display: grid; gap: 10px; }
+.section-head h2 { font-family: var(--display); font-weight: 800; font-size: 26px; margin: 0; letter-spacing: -0.01em; }
+.section-head p { margin: 0; color: var(--muted); max-width: 72ch; }
+.who { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 14px; }
+.who code { font-family: var(--mono); font-size: 13px; background: var(--brand-soft); color: var(--ink); padding: 2px 8px; border-radius: 6px; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13.5px; color: var(--muted); }
+.chip { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 5px 10px; font: 600 13px var(--body); cursor: pointer; }
+.chip[aria-pressed="true"] { border-color: var(--brand-2); color: var(--brand-2); background: var(--brand-soft); }
+.list { display: grid; gap: 10px; }
+.part { font-family: var(--display); font-weight: 700; font-size: 18px; margin: 14px 0 2px; display: flex; gap: 10px; align-items: baseline; }
+.part small { font-family: var(--body); font-size: 13px; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; }
+.card.pass { border-left: 5px solid var(--pass); }
+.card.fail { border-left: 5px solid var(--fail); }
+.card.skip { border-left: 5px solid var(--skip); }
+.num { font-family: var(--mono); font-size: 12.5px; color: var(--muted); padding-top: 3px; min-width: 2.8em; }
+.body { min-width: 0; display: grid; gap: 8px; }
+.card h3 { margin: 0; font-size: 16px; font-weight: 700; line-height: 1.35; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.badge { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.badge.use { font-family: var(--mono); font-weight: 500; color: var(--ink); background: var(--brand-soft); border-color: transparent; }
+.badge.block { color: var(--fail); border-color: color-mix(in srgb, var(--fail) 35%, transparent); }
+.badge.wait { color: var(--skip); border-color: color-mix(in srgb, var(--skip) 40%, transparent); }
+.badge.key { color: var(--brand-2); border-color: color-mix(in srgb, var(--brand-2) 40%, transparent); }
+.card ol { margin: 0; padding-left: 20px; display: grid; gap: 2px; }
+.card .expect { background: var(--brand-soft); border-radius: 8px; padding: 8px 10px; font-size: 14px; }
+.card .expect strong { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--brand-2); display: block; margin-bottom: 2px; }
+.card .expect ul { margin: 2px 0 0; padding-left: 18px; display: grid; gap: 2px; }
+.card .tip { font-size: 13px; color: var(--muted); }
+.card .from { font-size: 12.5px; color: var(--muted); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.btn { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 6px 12px; font: 600 14px var(--body); cursor: pointer; }
+.btn:hover { border-color: var(--brand-2); }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+.btn.on-pass { background: var(--pass-soft); border-color: var(--pass); color: var(--pass); }
+.btn.on-fail { background: var(--fail-soft); border-color: var(--fail); color: var(--fail); }
+.btn.on-skip { background: var(--skip-soft); border-color: var(--skip); color: var(--skip); }
+.btn.clear { border-style: dashed; color: var(--muted); }
+.stamp { font-size: 12.5px; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
+.stamp img { width: 18px; height: 18px; border-radius: 50%; }
+textarea { width: 100%; min-height: 64px; resize: vertical; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: 14px/1.45 var(--body); background: var(--bg); color: var(--ink); }
+.saved { font-size: 12px; color: var(--muted); }
+button:focus-visible, textarea:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.note-banner { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 12px 14px; font-size: 14px; display: grid; gap: 6px; }
+.note-banner.info { border-color: color-mix(in srgb, var(--info) 40%, transparent); background: var(--info-soft); }
+.note-banner ul { margin: 0; padding-left: 18px; display: grid; gap: 3px; }
+.logins { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.logins table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 14px; }
+.logins th, .logins td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.logins th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.logins td.m { font-family: var(--mono); font-size: 13px; white-space: nowrap; }
+.logins tr:last-child td { border-bottom: 0; }
+.empty { color: var(--muted); padding: 18px; text-align: center; border: 1px dashed var(--line); border-radius: 12px; }
+@media (max-width: 520px) { .card { grid-template-columns: 1fr; } .num { padding-top: 0; } }
+@media (prefers-reduced-motion: reduce) { .bar i { transition: none; } }
+</style>
+
+<header class="mast">
+  <div class="wrap">
+    <div class="mast-top">
+      <div>
+        <div class="tl-mark" aria-hidden="true">TL</div>
+        <h1>Trading Labs Test Board</h1>
+        <p>A full check of the CRM: every screen, every rule and every type of account. Pick a tab, sign in with the account shown on each card, follow the steps, and mark what happened. Everyone on the team sees the same board, live.</p>
+      </div>
+      <div class="tally" id="tally" aria-live="polite"></div>
+    </div>
+    <div class="bar" id="bar" aria-hidden="true"><i class="bp"></i><i class="bf"></i><i class="bs"></i></div>
+    <div class="sync" id="sync">Connecting to the shared board…</div>
+  </div>
+</header>
+
+<nav class="tabs" aria-label="Sections"><div class="wrap" id="tabs" role="tablist"></div></nav>
+
+<main><div class="wrap" id="main"></div></main>
+
+<script>
+const PW = "TLtest@2026";
+const T = (id, part, use, t, steps, expect, o = {}) => ({ id, part, use, t, steps, expect, ...o });
+
+const GROUPS = [
+  {
+    id: "start", label: "Before you start", account: null,
+    intro: "Do these once, before anyone starts testing. They set up a clean copy of the CRM with test accounts and no real client data, and give the team what it needs for the deeper tests.",
+    tests: [
+      T("S1", "Set up", "Main computer", "Load the clean test data", ["Open Docker Desktop and wait until it says “Engine running”.", "Double-click Desktop\\CRM\\scripts\\reset-test-data.bat.", "Wait for the window to show the list of logins."], "The window ends with “Test data seeded: 24 people, 4 teams, 2 brokers, 0 leads.”", { key: 1 }),
+      T("S2", "Set up", "Main computer", "Open the CRM for the whole team", ["Double-click Desktop\\CRM\\scripts\\start-testing.bat.", "Copy the web address it shows (it starts with http:// and ends in :3200).", "Send that address to everyone on the same Wi-Fi.", "Keep the window open and the computer awake for the whole session."], "Each tester can open the address on their own laptop and sees the Trading Labs sign-in page.", { key: 1 }),
+      T("S3", "Set up", "Main computer", "Find the test email inbox", ["Take the CRM address and change :3200 at the end to :54324.", "Open it in a browser."], "A page called Mailpit opens. All emails the CRM sends during testing (password resets, invites) land here instead of real inboxes."),
+      T("S4", "Set up", "Everyone", "Split the work", ["Give each tester one or two tabs on this board.", "For the Full journey tab, book 30 minutes when one person is on each account at the same time.", "Agree that whoever finds a problem marks it here with a note good enough for someone else to repeat it."], "Everyone knows which account they are signing in with and which tab they own."),
+      T("S5", "Set up", "Owner and Admin testers", "Get the phone codes ready", ["The Owner tester and the Admin tester each install Google Authenticator or Microsoft Authenticator on their phone."], "Both have the app ready before they first sign in. Without it they cannot get past the sign-in page."),
+      T("S6", "Test data", "owner@tl.test", "Load 30 practice leads", ["Sign in as the Owner, open Add leads, then the import tab, and download the template.", "Fill 30 rows with made-up names and numbers (for example 0300 1110001 to 0300 1110030), spread across the sources Facebook, Instagram, TikTok, PR, Referral and Walk-in.", "Import the file."], "30 new leads appear in All leads, all with the status New and no team. The sharing-out tests on the Admin tab need these.", { key: 1 }),
+      T("S7", "Test data", "Main computer or a TV", "Keep the Arena on a big screen", ["On a spare screen, sign in as any account and open Arena.", "Leave it open all session."], "Everyone can glance at it to see live changes when deposits are confirmed."),
+      T("S8", "Test data", "owner@tl.test", "Make waiting-time tests faster (optional)", ["In Settings, lower “referral deadline hours” from 24 to 1 and “max call tries” from 5 to 3.", "Write the original values in the note below so they get put back."], "Tests marked “Needs waiting time” become quicker. Put the settings back to 24 and 5 at the end of testing.", { wait: 1 }),
+    ],
+  },
+  {
+    id: "everyone", label: "Every account", account: "Repeat with each account type and say which in your note",
+    intro: "These checks apply to all five types of account. Run each one with the Owner, the Admin, a Team Lead, an Agent and the Analyst, and write which accounts you used in the note.",
+    tests: [
+      T("E1", "Signing in", "Each account", "Signing in opens the right home page", ["Sign in with the account's email and the test password."], ["Owner opens on Dashboard.", "Admin opens on Work queue.", "Team Lead opens on Team.", "Agent opens on Today's calls.", "Analyst opens on Sessions."], { key: 1 }),
+      T("E2", "Signing in", "Each account", "A wrong password is refused", ["Sign out.", "Sign in with the right email and a wrong password.", "Try an email that doesn't exist."], "Both show an error and you stay on the sign-in page. The message does not say whether the email exists.", { block: 1 }),
+      T("E3", "Signing in", "Any account", "Signed-out people can't open inside pages", ["Sign out.", "Paste the address of an inside page (for example the CRM address ending in /today) and press Enter."], "You are sent to the sign-in page. After signing in you land on the page you asked for, if your account may open it.", { block: 1 }),
+      T("E4", "Signing in", "Any account", "There is no way to sign up", ["Look around the sign-in page for a “Create account” or “Sign up” link."], "There is none. New people can only be added by the Owner or Admin.", { block: 1 }),
+      T("E5", "Signing in", "Any account", "Forgot password works end to end", ["On the sign-in page click “Forgot password” and enter the email.", "Open the test inbox (see S3), open the email and follow the link.", "Set a new password and sign in with it."], "The email arrives within a minute, the link works once, and the new password lets you in.", { tip: "Set the password back to TLtest@2026 afterwards so others can still use this account." }),
+      T("E6", "My profile", "Each account", "Profile photo", ["Open your profile from the top right.", "Upload a photo.", "Look at the top bar, and at the Arena if you are a Team Lead."], "The photo shows straight away in the top bar. A Team Lead's photo also shows on their team's Arena lane."),
+      T("E7", "My profile", "Each account", "Change your password, with the length rule", ["In your profile, try a new password of 9 characters.", "Then use one of at least 10 characters.", "Sign out and in with the new one, then change it back to TLtest@2026."], "9 characters is refused with a clear message. 10 or more is accepted.", { block: 1 }),
+      T("E8", "My profile", "Each account", "You can only change your own photo and password", ["On your profile, look for ways to change your own name, email, phone or role."], "Those are shown but can't be changed by you. Only the Owner (or the Admin, for Team Leads and agents) changes them.", { block: 1 }),
+      T("E9", "Menu and access", "Each account", "The menu only shows what this person should use", ["Look at the purple menu on the left."], ["Owner: everything, including Brokers, Targets, Settings, Audit log and Styleguide.", "Admin: everything except Dashboard, Brokers, Targets, Settings, Audit log and Styleguide.", "Team Lead: Team, Today's calls, Pipeline, Assign leads, Arena, Leaderboard.", "Agent: Today's calls, Pipeline, Arena, Leaderboard.", "Analyst: Sessions, Arena, Leaderboard."], { key: 1 }),
+      T("E10", "Menu and access", "Agent, then Analyst, then Team Lead", "Typing a blocked page address shows “No access”", ["Replace the end of the address with each of these and press Enter: /users, /deposits, /documents, /distribution, /exports, /reports, /settings, /audit-log."], "Each one shows a “No access” page with nothing from the real page visible.", { block: 1, key: 1 }),
+      T("E11", "Menu and access", "Any account", "Unknown pages", ["Add /something-made-up to the end of the address."], "A purple and white “Page not found” page appears, with a way back home."),
+      T("E12", "Notifications", "Any account, with a teammate", "The bell updates by itself", ["Keep your page open.", "Ask a teammate to do something that notifies you (the Admin assigns you a lead, or a Team Lead leaves you a note)."], "The red number on the bell goes up within a few seconds without you refreshing the page."),
+      T("E13", "Notifications", "Any account", "Notifications page", ["Open Notifications from the bell.", "Switch between All and Unread.", "Click one notification.", "Click “Mark all as read”."], "Clicking opens the exact lead or deposit it talks about and marks it as read. Mark all as read clears the bell's number."),
+      T("E14", "Search", "Each account", "Search finds only what you may see", ["In the top search bar type 2 letters, then 3 letters of a lead's name.", "Search part of a phone number.", "Press Enter to open the full results page."], "Nothing shows at 2 letters. From 3 letters, only leads this account may work on appear. Enter opens a results page.", { key: 1 }),
+      T("E15", "Search", "Agent or Team Lead", "Search can't be used to peek at other teams", ["Search the full phone number of a lead that belongs to another team or another agent."], "It says “Already in the system” and shows no name, owner or link.", { block: 1 }),
+      T("E16", "Arena and boards", "Each account", "The Arena opens for everyone", ["Click Arena in the menu.", "Click “Back to the CRM” at the top."], "A dark purple page opens with team lanes, top agents, a live feed and a month summary. No client names anywhere. “Back to the CRM” returns to this account's home page."),
+    ],
+  },
+  {
+    id: "owner", label: "Owner", account: "owner@tl.test",
+    intro: "The Owner (called Superadmin inside the app) sets up the company: people, teams, brokers, targets, prizes and settings. The Owner sees everything and is the only one who can read the audit log.",
+    tests: [
+      T("O1", "Signing in safely", "owner@tl.test", "First sign-in sets up a phone code", ["Sign in with owner@tl.test.", "Scan the square code with the phone app.", "Type the 6-digit number the app shows.", "Sign out and sign in again."], "The second time, after the password, it asks for a fresh 6-digit number before letting you in.", { key: 1, tip: "Whoever holds this phone is the only one who can sign in as Owner." }),
+      T("O2", "Signing in safely", "owner@tl.test", "A wrong or old code is refused", ["At the code step, type 123456.", "Then type a code that has just expired (wait for the app to show a new one and use the old one)."], "Both are refused. You are not let in.", { block: 1 }),
+      T("O3", "Signing in safely", "owner@tl.test", "Signed out when left idle", ["Sign in and leave the page untouched for 30 minutes (or lower “idle sign-out minutes” in Settings to test faster)."], "You are signed out automatically and sent to the sign-in page.", { wait: 1 }),
+      T("O4", "People and teams", "owner@tl.test", "Add one of each type of person", ["Open Users and teams.", "Add an Admin, an Analyst and an Agent for Team B (use emails like admin2@tl.test).", "Check the test inbox for their invite emails."], "All three appear in the people list with the right role and team. Each gets an invite email with a link to set a password."),
+      T("O5", "People and teams", "owner@tl.test", "Create a fifth team", ["Add a new person as Team Lead, then add a team called “Team E” with that person as lead.", "Try another team called “team e” (same name, different capitals).", "Try a team name of one letter."], "Team E is created. The duplicate name and the one-letter name are both refused.", { block: 1 }),
+      T("O6", "People and teams", "owner@tl.test", "Phone number rules for staff", ["Edit A2 and give a phone of 03001234567.", "Try 12345.", "Try giving A3 the same number as A2."], "The correct number saves. The short one and the repeated one are refused.", { block: 1 }),
+      T("O7", "People and teams", "owner@tl.test + a Team Lead", "Switching off an agent returns their leads", ["Make sure A3 has a few open leads.", "Switch A3 off.", "Read the message that appears, then sign in as A1."], "The message says how many leads were returned. A1 sees them in the unassigned list. A3 can no longer sign in and sees “Account disabled, contact your Admin”.", { key: 1 }),
+      T("O8", "People and teams", "owner@tl.test", "Someone already signed in gets thrown out", ["Have a tester sign in as D4 and keep the page open.", "Switch D4 off.", "D4 clicks anything."], "D4 is signed out straight away and cannot get back in. Switch D4 back on afterwards.", { block: 1 }),
+      T("O9", "People and teams", "owner@tl.test", "A Team Lead can't be removed by accident", ["Try to switch off D1 (who leads Team D).", "Try to change D1's role to Agent."], "Both are refused until someone else is made Team D's lead.", { block: 1 }),
+      T("O10", "People and teams", "owner@tl.test", "Change a team's lead", ["Make D2 the Team Lead of Team D."], "D2 becomes the lead and D1 is no longer lead. Team D still has exactly one lead. Change it back afterwards."),
+      T("O11", "People and teams", "owner@tl.test", "Move an agent and change a team colour", ["Move B4 to Team C.", "Change Team C's colour."], "B4 now shows in Team C. The new colour shows on Users and teams and on the Arena lane. Put both back afterwards."),
+      T("O12", "People and teams", "owner@tl.test", "Reset someone else's password", ["Use “Reset password” on C3.", "Open the test inbox."], "A reset email for C3 is there and the link works."),
+      T("O13", "People and teams", "owner@tl.test", "Find people quickly", ["In the people list, search for “B” and filter by role Agent."], "Only matching agents show."),
+      T("O14", "Brokers", "owner@tl.test", "Add brokers for each market", ["Open Brokers.", "Add “Test Broker 3” with market Other.", "Open its document checklist."], "It is added and switched on. A new broker starts with six items ticked: CNIC front, CNIC back, photo, signature, proof of income, bank proof. Proof of address, Zakat declaration and nominee CNIC are there but unticked."),
+      T("O15", "Brokers", "owner@tl.test + an Agent", "Checklist changes only affect new clients", ["Untick “signature” on Test Broker (PSX).", "An agent starts documents for a new client with that broker.", "Look at a client already in progress with that broker (if any)."], "The new client's checklist has no signature item. A client already in progress keeps the old list."),
+      T("O16", "Brokers", "owner@tl.test + an Agent", "Switch a broker off", ["Switch Test Broker 3 off.", "Look for a delete button.", "As an agent, open the broker list on a client's documents."], "There is no delete, only on and off. The switched-off broker does not appear for the agent.", { block: 1 }),
+      T("O17", "Targets, prizes and settings", "owner@tl.test", "Monthly targets", ["Open Targets.", "Enter a target for each team for this month (for example Rs 1,000,000).", "Watch the company total row.", "Use “Copy last month”, then try to type in a past month."], "Two past months are greyed out and can't be changed. This month is highlighted. Three future months can be filled. The total adds up as you type, and unsaved changes are counted until you save.", { key: 1 }),
+      T("O18", "Targets, prizes and settings", "owner@tl.test", "Team prizes", ["Open Team prizes.", "Set a prize per team for this month and next month.", "Open the Arena and a Team Lead's Team page."], "The prize shows on each team's Arena lane and on that team's Team page."),
+      T("O19", "Targets, prizes and settings", "owner@tl.test", "Change a setting", ["Open Settings.", "Change “first call deadline hours” from 24 to 12 and save.", "Change it back."], "Each change saves at once and shows the new value."),
+      T("O20", "Targets, prizes and settings", "owner@tl.test", "Edit the lists in Settings", ["In Settings, add “WhatsApp group” to the lead sources list.", "Open Add leads and look at the source choices.", "Remove it again."], "The new source appears on the Add leads form, and disappears after you remove it. Try the same with the “not interested reasons” list."),
+      T("O21", "Adding leads", "owner@tl.test", "Add one lead by hand", ["Open Add leads.", "Leave name, phone or source empty and try to save.", "Fill all three and click “Save and add another”."], "Empty required fields are refused. “Save and add another” clears the form but keeps the source you picked. Plain “Save” opens the new lead.", { key: 1 }),
+      T("O22", "Adding leads", "owner@tl.test", "Different ways of writing a phone number", ["Add three leads with: 0300 2220001, +92 300 2220002, and a landline 051 2220003.", "Try 12345."], "All three are accepted and stored the same way (starting +92). 12345 is refused."),
+      T("O23", "Adding leads", "owner@tl.test", "The same number written differently is still caught", ["Add a lead with 03002220001.", "Then try +923002220001."], "The second one says “That number is already in the system” with a link to the first. Nothing is added.", { block: 1, key: 1 }),
+      T("O24", "Adding leads", "owner@tl.test", "Import from a file: the 7/2/1 check", ["Download the template.", "Fill 10 rows: 2 with numbers that already exist, 1 with a broken number (123).", "Upload, match the columns, review."], "The review says 7 new, 2 already in the system, 1 not valid, with the reason for each skipped row. After import, exactly 7 are added and you can download the 3 skipped rows with a Reason column.", { key: 1 }),
+      T("O25", "Adding leads", "owner@tl.test", "Import: guessing columns and one source for all", ["Upload a file whose headers are in a different order, for example “Mobile, Full name, City”.", "Use “Same source for every row”."], "The columns are matched to the right fields automatically (you can fix any it gets wrong). Every row gets the chosen source."),
+      T("O26", "Adding leads", "owner@tl.test", "Import: unknown source", ["Import a row whose source is “Billboard” (not on the list)."], "That row is skipped with a reason. The others import normally.", { block: 1 }),
+      T("O27", "Overview", "owner@tl.test", "Company dashboard", ["Open Dashboard.", "Switch between Today, This week, This month and All time.", "Click any number."], "The headline, team ranking, funnel, by source, by broker, live feed and attention panel all change with the period. Every number opens the list behind it, with the same count.", { key: 1 }),
+      T("O28", "Overview", "owner@tl.test", "The seven reports", ["Open Reports and open each one: Funnel, Source performance, Agent activity, Deposits, Analyst sessions, Ageing, Quality.", "Change period, team and broker on each."], "Each shows a chart and the table behind it, and the filters change both. Only confirmed deposits are counted."),
+      T("O29", "Overview", "owner@tl.test", "Reports agree with the boards", ["After the Full journey, open the Deposits report for This month.", "Compare with the Leaderboard's Teams board for This month."], "The totals are exactly the same.", { key: 1 }),
+      T("O30", "Overview", "owner@tl.test", "Which source brings the money?", ["Open Source performance for This month."], "You can see, per source, how many leads came in and how much was deposited. This is the question the reports were built to answer."),
+      T("O31", "Downloads and records", "owner@tl.test", "Download data, with sensitive columns", ["Open Exports.", "Download leads for this month with the CNIC and IBAN box ticked.", "Download calls, and deposits."], "Each file downloads and opens in Excel. Only the Owner's leads file has CNIC and IBAN. Each download adds a line to the export history.", { key: 1 }),
+      T("O32", "Downloads and records", "owner@tl.test", "Audit log", ["Open Audit log.", "Filter by your name, then by an action like a settings change, then by date.", "Use Newer and Older to move between pages.", "Open one entry."], "Every change you made today is listed with who, what, when, and the old and new values. There is no edit or delete button anywhere.", { key: 1 }),
+      T("O33", "Downloads and records", "owner@tl.test", "Styleguide page", ["Open Styleguide from the menu."], "A page showing the app's buttons, colours and parts in white and purple. Only the Owner can open it."),
+    ],
+  },
+  {
+    id: "admin", label: "Admin", account: "admin@tl.test",
+    intro: "The Admin runs the day: shares out leads, manages Team Leads and agents, checks client documents and confirms deposits. The Admin cannot touch brokers, targets, settings or the audit log.",
+    tests: [
+      T("A1", "Signing in", "admin@tl.test", "Phone code on every sign-in", ["Sign in, set up the 6-digit code with the phone app.", "Sign out and in again."], "Every sign-in asks for the 6-digit code after the password.", { key: 1 }),
+      T("A2", "Signing in", "admin@tl.test", "Owner-only pages stay closed", ["Type /dashboard, /brokers, /targets, /settings, /audit-log and /styleguide at the end of the address."], "Each shows “No access”.", { block: 1 }),
+      T("A3", "Work queue", "admin@tl.test", "Work queue home page", ["Look at the three boxes: Deposits to verify, Documents to review, Leads waiting for a team.", "Look at the “Needs a look” list and the Today strip.", "Click each box."], "Each box shows a count and how old the oldest item is, and opens that list. “Needs a look” lists things like large cash deposits, referrals with no session date, wrong-number marks waiting, returned leads and missed first calls."),
+      T("A4", "Work queue", "admin@tl.test", "Boxes change colour as items wait", ["Leave a deposit waiting more than 12 hours, then more than 24."], "The box turns amber after 12 hours and red after 24, and says “overdue” in words.", { wait: 1 }),
+      T("A5", "Sharing out leads", "admin@tl.test", "Lead pool", ["Open Distribution.", "Look at the counts by source at the top.", "Filter by source, campaign and name."], "The counts match the 30 practice leads by source. Filters narrow the table."),
+      T("A6", "Sharing out leads", "admin@tl.test", "“Distribute evenly” shows a preview first", ["Tick all 30 leads and click “Distribute evenly”.", "Read the preview, then close it without confirming.", "Check that nothing moved.", "Open it again and confirm."], "The preview shows how many of each source go to each team. Team totals differ by at most 1, and so do the counts per source. Closing writes nothing. After confirming, each Team Lead gets a notification.", { key: 1 }),
+      T("A7", "Sharing out leads", "admin@tl.test", "Send chosen leads to one team", ["Tick 3 leads and use “Assign to team” → Team A."], "They go to Team A as Assigned with no agent yet, and A1 is notified."),
+      T("A8", "Sharing out leads", "admin@tl.test", "Moving a lead between teams needs a reason", ["Move a Team A lead to Team B without a reason.", "Then give a reason."], "Without a reason it is blocked. With one, the lead keeps its status (for example Follow-up stays Follow-up), loses its agent, and Team B's lead is notified.", { block: 1 }),
+      T("A9", "All leads", "admin@tl.test", "Filters", ["Open All leads.", "Try each filter: status, team, person, source, name or phone, “returned only”, Interest (Hot, Warm, Cold), contacted by, last contact."], "Each filter narrows the list correctly, and they work together."),
+      T("A10", "All leads", "admin@tl.test", "Saved views", ["Open the built-in views, including “Hot leads” and “Not contacted for 8+ days”.", "Set some filters and save your own view.", "Open the CRM in a different browser."], "Built-in views work. Your saved view appears in this browser, but not in the other browser (views are kept per browser)."),
+      T("A11", "All leads", "admin@tl.test", "Change many leads at once", ["Tick 4 leads and use “Move to team” with a reason.", "Tick 2 and use “Assign to person” with a reason."], "All ticked leads move, each move is recorded, and the receivers are notified."),
+      T("A12", "All leads", "admin@tl.test", "Closed leads can't go back too soon", ["Open a lead an agent marked Not interested today.", "Try “Return to the pool”."], "Refused. A Not interested lead can only return to the pool after 90 days (the cooling-off setting).", { block: 1 }),
+      T("A13", "People", "admin@tl.test", "Admin manages Team Leads and agents only", ["Open Users and teams.", "Add an agent to Team C.", "Try to add an Admin or an Analyst.", "Look at the Owner's and Analyst's rows."], "Adding the agent works. Admin and Analyst are not offered. Rows the Admin may not change say “Superadmin only”.", { block: 1 }),
+      T("A14", "Sessions", "admin@tl.test", "See every referral to the Analyst", ["After agents have made referrals, open Sessions."], "Every open referral is listed with who has it and which are past the deadline."),
+      T("A15", "Sessions", "admin@tl.test + an Agent", "Alert when a referral has no session date", ["An agent refers a client and the Analyst does nothing.", "Wait past the referral deadline (24 hours, or 1 hour if you lowered it in S8)."], "Every Admin gets one alert about that referral.", { wait: 1 }),
+      T("A16", "Client documents", "admin@tl.test", "Review queue", ["After an agent ticks a client's documents, open Documents.", "Switch between “Waiting for review” and “All in progress”.", "Open one."], "The list shows days waiting (red after 2 days) and the CNIC with only the last 4 digits. The detail panel shows the full CNIC and IBAN beside the checklist.", { key: 1 }),
+      T("A17", "Client documents", "admin@tl.test", "Approve, reject and unlock", ["Approve one item.", "Reject another, first without a reason, then with one.", "Unlock an approved item.", "Use “Approve all”."], "Reject without a reason is blocked. The agent sees the reason in red and on their Today's calls. Unlocking lets the agent change that item again. When every item is approved and every detail filled, the client's documents show as approved.", { key: 1 }),
+      T("A18", "Deposits", "admin@tl.test", "Pending deposits", ["After an agent records a deposit, open Deposits, Pending tab.", "Open the deposit."], "It shows amount, date, method and reference number, and the client's bank with a masked IBAN to compare against the bank statement. Items waiting more than a day turn red."),
+      T("A19", "Deposits", "admin@tl.test", "Confirm a deposit", ["Click Verify without ticking “matches the statement”.", "Tick it and click Verify."], "Without the tick it won't confirm. After confirming: the deposit moves to Verified, the lead shows “Deposit verified”, the agent, Team Lead and Analyst (if one helped) are notified, the agent sees a pop-up with the amount, and the Arena total goes up.", { key: 1 }),
+      T("A20", "Deposits", "admin@tl.test + an Agent", "Refuse a deposit", ["Reject a first deposit, without then with a reason.", "As the agent, record a new deposit using the same reference number."], "Without a reason it is blocked. With one, the lead returns to “Documents pending” with a follow-up booked for tomorrow. The rejected reference number can be used again."),
+      T("A21", "Deposits", "admin@tl.test", "Ask the agent a question", ["On a pending deposit, click “Ask the agent” and write a question."], "The agent gets a notification with the question. The deposit stays pending."),
+      T("A22", "Deposits", "admin@tl.test", "Take back a confirmed deposit", ["Reverse a verified deposit, without then with a reason.", "Watch the Arena and the Leaderboard."], "Needs a reason. The amount leaves the boards within about 10 seconds. The lead's status stays “Deposit verified”. The old line in the Arena's live feed stays."),
+      T("A23", "Deposits", "admin@tl.test", "Can't confirm before documents are approved", ["Find a pending deposit whose client documents are not all approved, and try to verify it."], "Refused.", { block: 1 }),
+      T("A24", "Deposits", "admin@tl.test", "Can't confirm your own deposit", ["Record a deposit on a lead as the Admin.", "Try to verify it."], "Refused. Someone else must confirm it.", { block: 1, key: 1 }),
+      T("A25", "Prizes and data", "admin@tl.test", "Admin can set team prizes", ["Open Team prizes and change one team's prize."], "Saved, and shown on the Arena."),
+      T("A26", "Prizes and data", "admin@tl.test", "Download data without sensitive columns", ["Open Exports and download leads."], "The file has no CNIC or IBAN columns, and there is no box to add them. A line is added to the export history.", { block: 1 }),
+      T("A27", "Prizes and data", "admin@tl.test", "Reports open for the Admin", ["Open Reports and two or three of the reports."], "They open and work the same as for the Owner."),
+    ],
+  },
+  {
+    id: "lead", label: "Team Lead", account: "a1@tl.test (also b1, c1, d1)",
+    intro: "The Team Lead hands leads to their agents, watches the team's numbers, confirms wrong-number marks, and also calls leads themselves. They only ever see their own team.",
+    tests: [
+      T("T1", "Team page", "a1@tl.test", "Team home page", ["Sign in as a1@tl.test and look at the Team page."], ["Banner: team rank, confirmed total, % of this month's target, progress bar, and the prize.", "Four boxes: new funded clients, calls today, overdue follow-ups, leads waiting for an agent.", "Agent table: open leads, calls today, overdue, confirmed this month, streak.", "A strip of leads by status, and lists of unassigned and returned leads."], { key: 1 }),
+      T("T2", "Team page", "a1@tl.test", "Team page matches the Arena", ["Compare Team A's total on the Team page with Team A's lane on the Arena (This month)."], "The two numbers are the same."),
+      T("T3", "Handing out leads", "a1@tl.test", "Assign leads screen", ["Open Assign leads.", "Switch between the Unassigned and Assigned tabs.", "Look at the people panel."], "Only Team A's leads show. The panel shows each person's open leads and calls due today."),
+      T("T4", "Handing out leads", "a1@tl.test", "Give leads to one agent", ["Tick 3 leads and “Assign selected to” A2."], "A2 gets them and a “Lead assigned” notification. Each lead starts a 24-hour countdown for the first call.", { key: 1 }),
+      T("T5", "Handing out leads", "a1@tl.test", "Split evenly, and take some yourself", ["Tick the rest and use “Split evenly”.", "Notice whether you (A1) are ticked by default, then tick yourself."], "You are not ticked by default. Once ticked, you get an equal share too, and those leads show on your own Today's calls."),
+      T("T6", "Handing out leads", "a1@tl.test", "Moving a lead between agents needs a reason", ["Reassign a lead from A2 to A3, first without a reason, then with one."], "Without a reason it is blocked. With one, A3 gets it and A2 no longer sees it.", { block: 1 }),
+      T("T7", "Handing out leads", "a1@tl.test + an Agent", "Leads come back after too many unanswered calls", ["Have A2 log “No answer” 5 times on one lead (3 if you lowered it in S8)."], "After the last one, the lead leaves A2, shows in your unassigned list marked as returned, and you get a notification.", { key: 1 }),
+      T("T8", "Handing out leads", "a1@tl.test", "Can't send leads to another team", ["Try to assign one of your leads to an agent in Team B."], "Team B's people are not offered, and it can't be done.", { block: 1 }),
+      T("T9", "Working leads", "a1@tl.test", "Your own calls", ["Open Today's calls and Pipeline."], "They show only the leads assigned to you personally, and work the same as for an agent (see the Agent tab)."),
+      T("T10", "Working leads", "a1@tl.test", "Team pipeline", ["In Pipeline, switch to the team view and filter by person."], "You see every Team A lead by status, and can narrow to one agent."),
+      T("T11", "Working leads", "a1@tl.test", "Leave a note for an agent", ["Open one of A2's leads and add a note."], "A2 gets a notification and sees the note on the lead's timeline."),
+      T("T12", "Working leads", "a1@tl.test", "Confirm or reject a wrong-number mark", ["When an agent marks a lead Invalid, open it from your notification.", "Reject the mark on one lead and confirm it on another."], "Rejected: the lead goes back to Follow-up for the agent, who is told. Confirmed: the lead is closed as Invalid.", { key: 1 }),
+      T("T13", "Working leads", "a1@tl.test", "Cancel a referral to the Analyst", ["On a team lead that is with the Analyst (before the session), click “Cancel referral”."], "The lead goes back to Interested."),
+      T("T14", "Working leads", "a1@tl.test", "Documents and deposits for your team", ["Open a Team A client's Documents tab.", "Record a deposit for one of your own clients."], "You can see and tick documents for your team, and record deposits. You cannot verify a deposit."),
+      T("T15", "Limits", "a1@tl.test", "Other teams stay hidden", ["Ask b1 for a link to a Team B lead and open it."], "“No access”.", { block: 1 }),
+      T("T16", "Limits", "a1@tl.test", "Admin pages stay closed", ["Type /distribution, /leads, /deposits, /documents, /users, /exports and /reports at the end of the address."], "Each shows “No access”.", { block: 1 }),
+      T("T17", "Limits", "a1@tl.test", "Leaderboard", ["Open Leaderboard and try Teams, Agents and My team, with each period."], "All three boards work. My team shows only Team A's agents. Your own row is pinned at the bottom."),
+    ],
+  },
+  {
+    id: "agent", label: "Agent", account: "a2@tl.test (also a3–a5, b2–b5, c2–c5, d2–d5)",
+    intro: "The Agent calls leads, records how each call went, books call-backs, sends interested clients to the Analyst, collects the client's documents and records the deposit.",
+    tests: [
+      T("G1", "Start of the day", "a2@tl.test", "Today's calls", ["Sign in as a2@tl.test after A1 has given you leads.", "Look at Today's calls."], ["A count strip at the top.", "Overdue calls first, in red, with the word “Overdue”.", "Then calls due today, then new leads with a countdown to the first call (24 hours).", "A “Documents to fix” list when the Admin has rejected something."], { key: 1 }),
+      T("G2", "Start of the day", "a2@tl.test", "Work the whole list without leaving the page", ["Use “Log call” on each row of Today's calls."], "You can log every call from the list itself, and each row moves or disappears once handled."),
+      T("G3", "Calling", "a2@tl.test", "Log a “No answer” quickly", ["Open a lead and click Call.", "Pick No answer and Save."], "Saved in 2 clicks. The lead's timeline shows the call with your name and the time.", { key: 1 }),
+      T("G4", "Calling", "a2@tl.test", "Only sensible outcomes are offered", ["Open the call sheet on a New lead, then on an Interested lead."], "Each shows only the outcomes that make sense for that status."),
+      T("G5", "Calling", "a2@tl.test", "Call rules are enforced", ["Try saving Interested or Not interested without a note.", "Try saving Interested, Follow-up or No answer without a call-back time.", "Try saving Not interested or Invalid without picking a reason."], "Each is blocked with a clear message until the missing part is filled.", { block: 1, key: 1 }),
+      T("G6", "Calling", "a2@tl.test", "Call-back time shortcuts", ["In the call sheet, try “Tomorrow”, “In 2 days” and “Next week”.", "Then pick a custom date and time."], "The shortcuts book 11:00 am Karachi time on that day. The custom time is saved exactly."),
+      T("G7", "Calling", "a2@tl.test", "Calling twice with the same result", ["Log Interested on a lead that is already Interested."], "It is saved and only the call-back time changes."),
+      T("G8", "Calling", "a2@tl.test", "History can't be changed", ["Look at the timeline on a lead.", "Look for ways to edit or delete a call, or to pick a past date for a call."], "There are none. Every entry shows who and when, set by the system.", { block: 1 }),
+      T("G9", "Calling", "a2@tl.test", "WhatsApp button", ["Click WhatsApp on a lead."], "WhatsApp opens in a new tab with the client's number, and the timeline records it."),
+      T("G10", "Calling", "a2@tl.test + a teammate", "Two people changing the same lead", ["Open the same lead as A1 and A2 at the same time.", "A1 logs a call that changes its status.", "A2 then logs a different call without refreshing."], "A2 sees “This lead changed while you were working on it” and nothing is overwritten."),
+      T("G11", "Calling", "a2@tl.test", "Call-back reminders", ["Book a call-back 35 minutes ahead and wait."], "About 30 minutes before, you get a “due soon” notification. Once it's due you get one “overdue” notification. 15 minutes after the due time it counts as missed.", { wait: 1 }),
+      T("G12", "Contact and willingness", "a2@tl.test", "Willingness: Hot, Warm, Cold", ["Set Willingness to Hot from the drop-down on a lead.", "On another lead, pick Warm inside the call sheet."], "Both are saved and show in All leads for the Admin."),
+      T("G13", "Contact and willingness", "a2@tl.test", "Log a message, and what counts as contact", ["Click “Log a message” and record a WhatsApp, then a Message, then an Email.", "On another lead add only a note."], "After a message the contact label turns green and says how long ago and how, for example “today · WhatsApp”. A note on its own leaves the label as it was.", { tip: "Yellow (4–7 days) and red (8+ days) can only be seen on leads not contacted for that long." }),
+      T("G14", "Contact and willingness", "a2@tl.test", "Mark a wrong number", ["Log a call as Invalid with “Wrong number”."], "The lead shows “waiting for confirmation” and A1 gets a notification to confirm or reject it."),
+      T("G15", "Analyst", "a2@tl.test", "Send an interested client to the Analyst", ["On an Interested lead, click “Refer to Technical Analysis”.", "Look at the list of analysts and their open session counts.", "Pick the Analyst, a preferred time and how (office, video or phone).", "Try to save without a note, then with one."], "Without a note it is blocked. Once saved, the lead shows “With Technical Analysis” and still belongs to you.", { key: 1 }),
+      T("G16", "Analyst", "a2@tl.test", "“Any available” referral", ["Refer another client with “Any available”."], "Every analyst can see it until one accepts it."),
+      T("G17", "Analyst", "a2@tl.test", "Cancel a referral", ["Before the session, cancel a referral."], "The lead goes back to Interested."),
+      T("G18", "Analyst", "a2@tl.test", "After the session", ["When the Analyst hands back, open the lead's Session tab.", "Use “Book another session” if you want one."], "You see the Analyst's notes, client level, interest and next step. The lead shows “Post-session follow-up”."),
+      T("G19", "Analyst", "a2@tl.test", "Skip the Analyst", ["On a different Interested lead, go straight to collecting documents."], "Allowed. The lead moves to “Documents pending” without any Analyst step."),
+      T("G20", "Client documents", "a2@tl.test", "Start the documents", ["Open the Documents tab and pick a broker.", "Tick each item as collected."], "The progress line moves as you tick. The checklist matches that broker's list.", { key: 1 }),
+      T("G21", "Client documents", "a2@tl.test", "Client detail checks", ["Try a CNIC with 12 digits, then with letters.", "Try a CNIC expiry date in the past.", "Try an IBAN that doesn't start with PK, and one that isn't 24 characters.", "Try a CNIC already used on another client.", "Save with only half the details filled."], "Each wrong value is refused with a clear message. Saving half-filled details is allowed, as long as what's filled is correct.", { block: 1, key: 1 }),
+      T("G22", "Client documents", "a2@tl.test", "All the client details", ["Fill income band, risk level, the politically-exposed-person question, “SIM in the client's own name” and consent."], "All save. Income bands are: under Rs 50,000, 50,000–150,000, 150,000–500,000, over 500,000 a month."),
+      T("G23", "Client documents", "a2@tl.test", "Approved items are locked", ["After the Admin approves some items, try to untick one.", "Try to change the broker."], "Neither is possible.", { block: 1 }),
+      T("G24", "Client documents", "a2@tl.test", "Fixing a rejected item", ["After the Admin rejects an item, look at Today's calls and the Documents tab."], "The reason shows in red in both places. Re-tick it once fixed, and it goes back to the Admin."),
+      T("G25", "Deposits", "a2@tl.test", "Record deposit stays locked until ready", ["Look at “Record a deposit” before every item is collected and every detail filled."], "Greyed out until everything is complete.", { block: 1 }),
+      T("G26", "Deposits", "a2@tl.test", "Record a deposit", ["Click “Record a deposit”.", "Check the broker, type and credited Analyst fields.", "Try a date in the future.", "Try leaving the reference number empty, then a reference already used.", "Then enter a correct deposit."], "Broker, type (first or top-up) and Analyst are filled in for you and can't be changed. Future dates, missing and repeated references are refused. A correct entry shows “Deposit recorded”.", { key: 1 }),
+      T("G27", "Deposits", "a2@tl.test", "Cash warning", ["Record Rs 30,000 by cash on one client.", "Record Rs 30,000 by bank transfer on another."], "Cash shows a warning (above Rs 25,000). Bank transfer does not."),
+      T("G28", "Deposits", "a2@tl.test", "A recorded deposit can't be edited", ["Look for a way to edit or delete a deposit you recorded."], "There is none. Mistakes are handled by the Admin rejecting it.", { block: 1 }),
+      T("G29", "Deposits", "a2@tl.test", "A second deposit from the same client", ["On a client whose first deposit is confirmed, record another."], "It is saved as a top-up. The lead's status doesn't change, and once confirmed it adds to your total."),
+      T("G30", "Pipeline", "a2@tl.test", "Pipeline", ["Open Pipeline.", "Use the filters (name, source).", "Turn on “Show closed”."], "Leads show in columns by status. Leads with no activity for 7 days are marked stale. Closed leads appear only with “Show closed” on."),
+      T("G31", "Privacy", "a2@tl.test", "Agents can't see each other's leads", ["Ask A3 for a link to one of their leads and open it.", "Search a phone number and a CNIC that belong to Team B."], "The link shows “No access”. The searches say “Already in the system” with no details.", { block: 1, key: 1 }),
+      T("G32", "Privacy", "a2@tl.test", "Sensitive numbers are hidden in lists", ["Look at any list or card that mentions a CNIC or IBAN."], "Only the last 4 digits show (for example •••• 1234). The full number appears only inside that client's lead page."),
+    ],
+  },
+  {
+    id: "analyst", label: "Analyst", account: "analyst@tl.test",
+    intro: "The Analyst gives interested clients a session to explain the market, then hands them back to the agent. The Analyst is credited if that client later deposits, and never sees client documents or money details.",
+    tests: [
+      T("N1", "Sessions", "analyst@tl.test", "Sessions home page", ["Sign in after an agent has made referrals."], "Shows counts, New referrals with an Accept button, Today's sessions, Upcoming (including ones still to book), and “My credit”.", { key: 1 }),
+      T("N2", "Sessions", "analyst@tl.test", "What you see before accepting", ["Look at an “Any available” referral before accepting it.", "Look at a referral sent to you by name."], "“Any available” shows only the client's first name, source, city and the agent's note. A referral sent to you by name can be opened straight away."),
+      T("N3", "Sessions", "analyst@tl.test", "Accept and book", ["Accept a referral.", "Book a date and how (office, video or phone).", "Move it to a different time."], "It moves to Today's or Upcoming. The agent sees the booked time on the lead."),
+      T("N4", "Sessions", "analyst@tl.test", "Record that the client attended", ["Open the session and pick Attended.", "Pick client level (Beginner, Some experience, Experienced) and interest (Low, Medium, High).", "Write notes and the next step, then “Save and hand back”."], "The agent gets a notification and sees your notes. The lead shows “Post-session follow-up”. You are now credited for this client.", { key: 1 }),
+      T("N5", "Sessions", "analyst@tl.test", "Record a no-show", ["On another session, pick No-show and save."], "The agent is told, and the lead stays “With Technical Analysis”."),
+      T("N6", "Limits", "analyst@tl.test", "Access ends after hand-back", ["After handing a client back, open its link again."], "“No access”.", { block: 1, key: 1 }),
+      T("N7", "Limits", "analyst@tl.test", "No documents or money", ["While a lead is with you, look for the Documents and Deposits tabs.", "Type /deposits and /documents at the end of the address."], "Neither tab is there, and both addresses show “No access”.", { block: 1 }),
+      T("N8", "Limits", "analyst@tl.test", "Boards", ["Open Leaderboard and try each board."], "Only the Analyst board opens. Team and agent boards say “No access”. The Arena opens normally and shows your “You” bar.", { block: 1 }),
+      T("N9", "Credit", "analyst@tl.test", "Credit when the client deposits", ["After the Full journey, look at “My credit” and the Analyst board."], "The confirmed amount from your credited client shows in “My credit” and on the Analyst board. Your notification about it does not name the client."),
+    ],
+  },
+  {
+    id: "arena", label: "Arena and boards", account: "Any account (use two screens)",
+    intro: "The Arena is the shared scoreboard on the office TV and every laptop. These checks need deposits to exist, so do them during or after the Full journey.",
+    tests: [
+      T("R1", "Arena", "Any account", "Everything on the Arena", ["Open Arena and look at each part."], ["A slanted lane per team with the Team Lead's photo, total, % of target and the team's prize.", "Top agents with rank arrows and streaks.", "Live feed of confirmed deposits.", "Top analysts.", "Month strip: total this month, new funded clients, biggest deposit this week, days left.", "A “You” bar with your rank (not shown for the Admin)."], { key: 1 }),
+      T("R2", "Arena", "Any account", "No client names anywhere", ["Read every part of the Arena and the Leaderboard."], "Only team names, staff first names and amounts. No client name, phone or lead.", { block: 1, key: 1 }),
+      T("R3", "Live changes", "Two screens", "A confirmed deposit shows up live", ["Keep the Arena open on one screen.", "On another, the Admin verifies a deposit."], "Within about 5 seconds, without refreshing, the team's lane surges, the amount counts up, a short burst plays, and a new feed line appears.", { key: 1 }),
+      T("R4", "Live changes", "Two screens", "A reversed deposit leaves the boards", ["The Admin reverses a deposit while the Arena is open."], "The team total drops within about 10 seconds. The feed line stays."),
+      T("R5", "Views", "Any account", "Period switch", ["Switch between Today, This week, This month and All time."], "All numbers change to match the period."),
+      T("R6", "Views", "Big screen", "Office TV view", ["Add ?tv=1 to the end of the Arena address, full screen on a big screen.", "Watch for a minute."], "No menu, no period switch, no “You” bar, larger text and a Karachi clock. The panel under the lanes switches between Top agents and Top analysts every 20 seconds. All four lanes fit without scrolling."),
+      T("R7", "Views", "Phone or narrow window", "Narrow screens", ["Open the Arena on a phone, or make the browser window narrow."], "The page switches to three tabs and stays dark purple from top to bottom."),
+      T("R8", "Views", "Any account", "Reduced motion", ["In Windows Settings, turn off “Animation effects” (Accessibility → Visual effects).", "Have the Admin verify a deposit."], "Numbers change instantly and no burst plays. Turn animation back on afterwards."),
+      T("R9", "Leaderboard", "Agent or Team Lead", "Leaderboard screen", ["Open Leaderboard.", "Switch boards and periods."], "Top three shown as cards, then the ranked list, with your own row pinned at the bottom. Totals match the Arena."),
+      T("R10", "Leaderboard", "Any account", "Rank arrows and streaks next day", ["The day after testing, look at the agents list."], "Rank arrows show who moved up or down since last night (taken at 11:55 pm). Streaks count working days (Monday to Friday) with no missed call-backs.", { wait: 1 }),
+    ],
+  },
+  {
+    id: "devices", label: "Screens and safety", account: "Any account",
+    intro: "Checks for different screen sizes, the installable app, losing the internet, and general safety.",
+    tests: [
+      T("D1", "Screen sizes", "Any account", "Laptop screens", ["Use a normal laptop (about 1366 wide), then shrink the browser window to about 1024 wide.", "Open each screen in the menu."], "Nothing needs sideways scrolling, nothing overlaps, and all buttons can be reached.", { key: 1 }),
+      T("D2", "Screen sizes", "Agent", "Phone", ["Open the CRM on a phone and sign in as an agent.", "Use Today's calls, a lead page and Pipeline."], "Everything is usable. Pipeline shows status tabs instead of columns. The menu opens from a button."),
+      T("D3", "App", "Any account", "Install as an app", ["In Chrome or Edge, use the install icon in the address bar (or menu → Install)."], "It installs with a purple Trading Labs icon and opens in its own window."),
+      T("D4", "App", "Any account", "No internet", ["Open the CRM, then switch Wi-Fi off and click to another page."], "A purple and white “You are offline” page appears instead of a browser error. It works again once Wi-Fi is back."),
+      T("D5", "Safety", "Any account", "Back button after signing out", ["Sign out, then press the browser's Back button."], "You don't see the previous page's data. You're asked to sign in.", { block: 1 }),
+      T("D6", "Safety", "Any account", "Speed", ["With some data in the system, open Today's calls and the Arena."], "Each is ready to use in about 2 seconds or less on a normal laptop."),
+      T("D7", "Safety", "Any account", "Same account in two tabs", ["Open the CRM in two tabs with the same account and work in both."], "Both stay signed in and show the same data after refreshing."),
+      T("D8", "Safety", "owner@tl.test", "Every important action is recorded", ["After a testing session, open the Audit log."], "You can find entries for adding leads, assignments, calls, document reviews, deposits verified, rejected and reversed, exports, and settings changes."),
+    ],
+  },
+  {
+    id: "journey", label: "Full journey", account: "Everyone at once: Owner, Admin, A1, A2 and the Analyst",
+    intro: "Real client stories from first contact to a confirmed deposit, with each person doing their part. Keep the Arena open on a separate screen the whole time.",
+    tests: [
+      T("J1", "Story 1: with the Analyst", "owner@tl.test", "Owner adds the client", ["Add a lead called “Journey One”."], "It appears in All leads as New, with no team.", { key: 1 }),
+      T("J2", "Story 1: with the Analyst", "admin@tl.test", "Admin sends it to Team A", ["Assign “Journey One” to Team A."], "A1 is notified and sees it in Assign leads."),
+      T("J3", "Story 1: with the Analyst", "a1@tl.test", "Team Lead gives it to an agent", ["Assign it to A2."], "A2 is notified and sees it on Today's calls with a first-call countdown."),
+      T("J4", "Story 1: with the Analyst", "a2@tl.test", "Agent calls, then refers", ["Log No answer once, then Interested with a note and a call-back time.", "Refer to the Analyst."], "The lead shows “With Technical Analysis”. The Analyst sees a new referral."),
+      T("J5", "Story 1: with the Analyst", "analyst@tl.test", "Analyst runs the session", ["Accept, book, record Attended and hand back."], "A2 gets the notes and a notification. The lead shows “Post-session follow-up”."),
+      T("J6", "Story 1: with the Analyst", "a2@tl.test", "Agent collects documents", ["Pick a broker, tick every document and fill every detail."], "The lead shows “Documents pending” and the Admin sees it in Documents."),
+      T("J7", "Story 1: with the Analyst", "admin@tl.test", "Admin rejects one item, then approves", ["Reject one item with a reason.", "A2 fixes and re-ticks it.", "Admin approves all."], "A2 sees the red reason on Today's calls. After approval, “Record a deposit” becomes available for A2."),
+      T("J8", "Story 1: with the Analyst", "a2@tl.test", "Agent records the deposit", ["Record Rs 100,000 by bank transfer with a fresh reference number."], "The lead shows “Deposit recorded”. The Admin sees it under Pending."),
+      T("J9", "Story 1: with the Analyst", "admin@tl.test", "Admin confirms, and the Arena reacts", ["Verify the deposit while someone watches the Arena."], "Within about 5 seconds Team A's lane grows, the feed shows Rs 100,000 and a burst plays. A2, A1 and the Analyst are notified. The Analyst's credit goes up by Rs 100,000.", { key: 1 }),
+      T("J10", "Story 1: with the Analyst", "a2@tl.test + admin@tl.test", "Top-up", ["A2 records a second deposit of Rs 50,000 for Journey One.", "Admin verifies it."], "Team A, A2 and the Analyst each go up by Rs 50,000. The lead's status doesn't change."),
+      T("J11", "Story 1: with the Analyst", "admin@tl.test", "Reverse the top-up", ["Reverse the Rs 50,000 with a reason."], "All three totals go back down by Rs 50,000."),
+      T("J12", "Story 2: straight to documents", "Owner, Admin, b1, b2", "No Analyst step", ["Owner adds “Journey Two”; Admin sends it to Team B; B1 gives it to B2.", "B2 logs Interested, then goes straight to documents, records a deposit; Admin approves and verifies."], "Works end to end with no Analyst involved. Team B's total goes up; no Analyst is credited."),
+      T("J13", "Story 3: closed lead", "Owner, Admin, c1, c2", "Not interested", ["Follow the same steps for “Journey Three” to Team C, agent C2.", "C2 logs Not interested with a reason and a note.", "Admin tries to return it to the pool."], "The lead closes with the reason shown. The Admin can't return it to the pool until 90 days have passed."),
+      T("J14", "Story 4: wrong number", "Owner, Admin, d1, d2", "Invalid, then rejected", ["Send “Journey Four” to D2.", "D2 marks it Invalid (wrong number).", "D1 rejects the mark."], "The lead goes back to Follow-up for D2, and D2 is told."),
+      T("J15", "Wrap-up", "owner@tl.test", "Numbers agree everywhere", ["Compare This month's totals on the Arena, the Leaderboard, the Team pages, the Company dashboard and the Deposits report."], "Every place shows the same confirmed total per team.", { key: 1 }),
+    ],
+  },
+  {
+    id: "decisions", label: "Decisions for you", kind: "decision", account: null,
+    intro: "While building, the developer made these choices where the plan didn't say. They are working this way right now. Read each one and mark Agree, Change it (say how in the note), or Later.",
+    tests: [
+      T("Q1", "Leads and calls", null, "Phone numbers: landlines are accepted, not only mobiles", [], "Any 10-digit Pakistani number is accepted. Say if only mobiles (starting with 3) should be allowed."),
+      T("Q2", "Leads and calls", null, "Saved views on All leads are kept per browser", [], "An Admin's saved filters don't follow them to another computer and aren't shared with other Admins."),
+      T("Q3", "Leads and calls", null, "Team Leads can take leads themselves", [], "They appear in “Split evenly”, unticked by default."),
+      T("Q4", "Leads and calls", null, "A lead moved to another team keeps its status and loses its agent", [], "For example a Follow-up stays a Follow-up, and the new Team Lead hands it to someone."),
+      T("Q5", "Leads and calls", null, "Calling again with the same result only updates the call-back time", [], "A second “Interested” call is not counted as a status change."),
+      T("Q6", "Leads and calls", null, "A call-back counts as missed 15 minutes after its time", [], "Missed call-backs break an agent's streak."),
+      T("Q7", "Leads and calls", null, "Call-back shortcuts use 11:00 am", [], "“Tomorrow”, “In 2 days” and “Next week” all book 11 am Karachi time."),
+      T("Q8", "Leads and calls", null, "Willingness isn't shown on Today's calls or Pipeline cards yet", [], "It shows only on the lead page and All leads. Say if agents need it on their cards."),
+      T("Q9", "Analyst", null, "A referral to a named analyst opens the lead to them straight away", [], "They can read it before accepting. “Any available” referrals open only after accepting."),
+      T("Q10", "Analyst", null, "Session choices", [], "Client level: Beginner, Some experience, Experienced. Interest: Low, Medium, High."),
+      T("Q11", "Documents", null, "Document checklist items", [], "Default six: CNIC front, CNIC back, photo, signature, proof of income, bank proof. Optional: proof of address, Zakat declaration, nominee CNIC."),
+      T("Q12", "Documents", null, "Income bands (monthly)", [], "Under Rs 50,000; 50,000–150,000; 150,000–500,000; over 500,000."),
+      T("Q13", "Documents", null, "The agent records risk level and the politically-exposed-person answer", [], "From the client's own answers, not checked by the Admin separately."),
+      T("Q14", "Documents", null, "Documents waiting more than 2 days turn red", [], "On the Admin's review list."),
+      T("Q15", "Deposits", null, "A rejected deposit frees its reference number", [], "So a typing mistake can be entered again. Pending, confirmed and reversed deposits keep theirs."),
+      T("Q16", "Deposits", null, "Reversing a deposit never changes the lead's status", [], "A client whose only deposit is reversed still shows “Deposit verified”. Say if it should reopen the lead."),
+      T("Q17", "Deposits", null, "Reversals always come off the boards", [], "The “reversal window days” setting (30) isn't used. Say if late reversals should stay counted."),
+      T("Q18", "Arena", null, "Streaks count Monday to Friday", [], "Say if the sales floor works Saturdays."),
+      T("Q19", "Arena", null, "The Arena shows at most six teams", [], "One per team colour."),
+      T("Q20", "Arena", null, "The live feed keeps a line for a reversed deposit", [], "Totals drop, but the old feed line stays."),
+      T("Q21", "Dashboards and data", null, "Work queue boxes", [], "Deposits to verify, Documents to review, Leads waiting for a team. Other alerts sit under “Needs a look”."),
+      T("Q22", "Dashboards and data", null, "The funnel counts movement during the period", [], "It shows leads that moved into each step in the period, not where all leads are right now."),
+      T("Q23", "Dashboards and data", null, "The Team page always shows the current month", [], "To match the monthly target and prize."),
+      T("Q24", "Dashboards and data", null, "Phone numbers in downloads start with an apostrophe", [], "They show as '+92… so Excel doesn't treat them as formulas."),
+      T("Q25", "Dashboards and data", null, "Downloads use the date things were recorded", [], "Deposits are picked by the date recorded, not the date confirmed."),
+      T("Q26", "Before going live", null, "One development-tool warning is accepted", [], "A security warning exists in a tool used only while building the app (not in the app itself) and has no fix yet."),
+      T("Q27", "Before going live", null, "Practise restoring a backup", [], "Before real client data goes in, try restoring the database from a backup once, following the README."),
+    ],
+  },
+];
+const NOT_BUILT = ["The Owner's “lead ownership” screen", "Deleting and restoring leads", "Agents and Team Leads adding their own leads", "The per-lead History tab and the global Logs screen"];
+
+const LOGINS = [
+  ["Owner", "owner@tl.test", "Owner (Superadmin in the app). Needs the phone code."],
+  ["Admin", "admin@tl.test", "Admin. Needs the phone code."],
+  ["A1, B1, C1, D1", "a1@tl.test … d1@tl.test", "Team Lead of Team A, B, C, D"],
+  ["A2–A5 … D2–D5", "a2@tl.test … d5@tl.test", "Agents, 4 per team"],
+  ["Analyst", "analyst@tl.test", "Technical Analyst"],
+];
+
+const TESTS = GROUPS.filter((g) => g.kind !== "decision").flatMap((g) => g.tests);
+const DECISIONS = GROUPS.find((g) => g.kind === "decision").tests;
+const BY_ID = Object.fromEntries(GROUPS.flatMap((g) => g.tests.map((t) => [t.id, { ...t, group: g }])));
+const results = {};
+let db = null, user = null, myId = null, canWrite = true;
+let current = "start";
+let filter = "all";
+try { const h = location.hash.slice(1); if (h === "problems" || GROUPS.some((g) => g.id === h)) current = h; } catch (e) {}
+try { const f = localStorage.getItem("tl-filter"); if (f) filter = f; } catch (e) {}
+
+const $ = (s, el = document) => el.querySelector(s);
+const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+const fmtTime = (iso) => { try { return new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }); } catch (e) { return ""; } };
+
+function counts(tests) {
+  let p = 0, f = 0, s = 0;
+  for (const t of tests) { const r = results[t.id]?.status; if (r === "pass") p++; else if (r === "fail") f++; else if (r === "skip") s++; }
+  return { p, f, s, total: tests.length, left: tests.length - p - f - s };
+}
+
+function renderTally() {
+  const c = counts(TESTS);
+  const t = $("#tally"); t.replaceChildren();
+  const add = (cls, n, label) => { const s = el("span", cls); s.append(el("b", null, String(n)), " " + label); t.append(s); };
+  add("p", c.p, "worked"); add("f", c.f, "problems"); add("s", c.s, "skipped"); add("", c.left, "of " + c.total + " not tested yet");
+  const bar = $("#bar").children;
+  bar[0].style.width = (100 * c.p / c.total) + "%";
+  bar[1].style.width = (100 * c.f / c.total) + "%";
+  bar[2].style.width = (100 * c.s / c.total) + "%";
+}
+
+function tabButton(id, label, c, extraCls) {
+  const b = el("button", "tab" + (extraCls ? " " + extraCls : ""));
+  b.type = "button"; b.setAttribute("role", "tab"); b.id = "tab-" + id;
+  b.setAttribute("aria-selected", String(id === current));
+  b.append(label);
+  if (c && c.f) { const d = el("span", "dot"); d.title = c.f + " problem(s)"; b.append(d); }
+  if (c) b.append(el("span", "n", (c.p + c.f + c.s) + "/" + c.total));
+  b.addEventListener("click", () => { current = id; try { history.replaceState(null, "", "#" + id); } catch (e) {} renderTabs(); renderMain(); window.scrollTo({ top: 0 }); });
+  return b;
+}
+
+function renderTabs() {
+  const box = $("#tabs"); box.replaceChildren();
+  for (const g of GROUPS) box.append(tabButton(g.id, g.label, counts(g.tests), g.kind === "decision" ? "sep" : ""));
+  const fails = Object.values(results).filter((r) => r.status === "fail").length;
+  const pb = tabButton("problems", "Problems found", null, "sep");
+  pb.append(el("span", "n", String(fails)));
+  box.append(pb);
+}
+
+function renderMain() {
+  const main = $("#main"); main.replaceChildren();
+  if (current === "problems") return renderProblems(main);
+  const g = GROUPS.find((x) => x.id === current);
+  const isDecision = g.kind === "decision";
+  const head = el("div", "section-head");
+  head.append(el("h2", null, g.label), el("p", null, g.intro));
+  if (g.account) {
+    const w = el("div", "who"); w.append("Sign in as ", el("code", null, g.account), " · password ", el("code", null, PW));
+    head.append(w);
+  }
+  main.append(head);
+
+  if (g.id === "start") {
+    const box = el("div", "logins"); const tb = el("table");
+    const hr = el("tr"); ["Name", "Email", "What they are"].forEach((h) => hr.append(el("th", null, h)));
+    const thead = el("thead"); thead.append(hr); tb.append(thead);
+    const tbody = el("tbody");
+    for (const [n, e, r] of LOGINS) { const tr = el("tr"); tr.append(el("td", null, n), el("td", "m", e), el("td", null, r)); tbody.append(tr); }
+    tb.append(tbody); box.append(tb); main.append(box);
+    const how = el("div", "note-banner info");
+    how.append(el("strong", null, "How to read a card"));
+    const ul = el("ul");
+    ["The grey box under the title says which account to sign in with.", "“Key test” means test this first: if it fails, the CRM isn't ready.", "“Should be refused” means the right result is that the CRM says no.", "“Needs waiting time” means the result only shows after minutes or hours.", "Problem: always add a note saying what you did, which account, and what you saw."].forEach((x) => ul.append(el("li", null, x)));
+    how.append(ul); main.append(how);
+    const nb = el("div", "note-banner");
+    nb.append(el("strong", null, "Not built yet, so don't test these"));
+    const ul2 = el("ul"); NOT_BUILT.forEach((x) => ul2.append(el("li", null, x))); nb.append(ul2);
+    main.append(nb);
+  }
+
+  const fl = el("div", "filters"); fl.append("Show:");
+  const opts = isDecision ? [["all", "All"], ["todo", "Not answered"], ["fail", "Change it"]] : [["all", "All"], ["key", "Key tests"], ["todo", "Not tested yet"], ["fail", "Problems"]];
+  for (const [k, label] of opts) {
+    const b = el("button", "chip", label); b.type = "button"; b.setAttribute("aria-pressed", String(filter === k));
+    b.addEventListener("click", () => { filter = k; try { localStorage.setItem("tl-filter", k); } catch (e) {} renderMain(); });
+    fl.append(b);
+  }
+  main.append(fl);
+
+  const list = el("div", "list");
+  const shown = g.tests.filter((t) => filter === "all" || (filter === "key" && t.key) || (filter === "todo" && !results[t.id]?.status) || (filter === "fail" && results[t.id]?.status === "fail"));
+  if (!shown.length) list.append(el("div", "empty", filter === "fail" ? "Nothing marked as a problem in this section." : filter === "key" ? "No key tests in this section." : "Everything in this section has been marked."));
+  let part = null;
+  for (const t of shown) {
+    if (t.part && t.part !== part) {
+      part = t.part;
+      const inPart = g.tests.filter((x) => x.part === part);
+      const c = counts(inPart);
+      const h = el("h3", "part", part); h.append(el("small", null, (c.p + c.f + c.s) + " of " + c.total + " done"));
+      list.append(h);
+    }
+    list.append(card(t, isDecision));
+  }
+  main.append(list);
+  refreshStamps();
+}
+
+function renderProblems(main) {
+  const head = el("div", "section-head");
+  head.append(el("h2", null, "Problems found"), el("p", null, "Every test anyone has marked as a Problem, and every decision marked “Change it”, in one list. Fix these, then ask the tester to run the test again and mark it Worked."));
+  main.append(head);
+  const list = el("div", "list");
+  const ids = Object.entries(results).filter(([, r]) => r.status === "fail").map(([id]) => id).filter((id) => BY_ID[id]);
+  if (!ids.length) list.append(el("div", "empty", "No problems reported yet."));
+  for (const id of ids) {
+    const t = BY_ID[id];
+    const c = card(t, t.group.kind === "decision");
+    $(".body", c).prepend(el("div", "from", t.group.label + (t.part ? " · " + t.part : "")));
+    list.append(c);
+  }
+  main.append(list);
+  refreshStamps();
+}
+
+function card(t, isDecision) {
+  const c = el("article", "card"); c.id = "card-" + t.id;
+  c.append(el("div", "num", t.id));
+  const b = el("div", "body");
+  b.append(el("h3", null, t.t));
+  const meta = el("div", "meta");
+  if (t.use) meta.append(el("span", "badge use", t.use));
+  if (t.key) meta.append(el("span", "badge key", "Key test"));
+  if (t.block) meta.append(el("span", "badge block", "Should be refused"));
+  if (t.wait) meta.append(el("span", "badge wait", "Needs waiting time"));
+  if (meta.childElementCount) b.append(meta);
+  if (t.steps && t.steps.length) { const ol = el("ol"); t.steps.forEach((s) => ol.append(el("li", null, s))); b.append(ol); }
+  const ex = el("div", "expect");
+  ex.append(el("strong", null, isDecision ? "How it works now" : "What should happen"));
+  if (Array.isArray(t.expect)) { const ul = el("ul"); t.expect.forEach((x) => ul.append(el("li", null, x))); ex.append(ul); }
+  else ex.append(t.expect);
+  b.append(ex);
+  if (t.tip) b.append(el("div", "tip", "Tip: " + t.tip));
+  const act = el("div", "actions");
+  const labels = isDecision ? [["pass", "Agree"], ["fail", "Change it"], ["skip", "Later"]] : [["pass", "Worked"], ["fail", "Problem"], ["skip", "Skip"]];
+  for (const [k, label] of labels) {
+    const btn = el("button", "btn", label); btn.type = "button"; btn.dataset.k = k;
+    btn.addEventListener("click", () => setStatus(t.id, results[t.id]?.status === k ? null : k));
+    act.append(btn);
+  }
+  const noteBtn = el("button", "btn clear", "Add note"); noteBtn.type = "button"; noteBtn.dataset.role = "note";
+  noteBtn.addEventListener("click", () => { const ta = $("textarea", c); ta.hidden = false; $(".saved", c).hidden = false; noteBtn.hidden = true; ta.focus(); });
+  act.append(noteBtn, el("span", "stamp"));
+  b.append(act);
+  const ta = el("textarea"); ta.id = "note-" + t.id;
+  ta.placeholder = isDecision ? "What should change? Be specific." : "What happened? Which account did you use? Write enough that someone else can repeat it.";
+  ta.setAttribute("aria-label", "Note for " + t.id);
+  ta.hidden = true;
+  let timer = null;
+  ta.addEventListener("input", () => { clearTimeout(timer); $(".saved", c).textContent = "Saving…"; timer = setTimeout(() => saveNote(t.id, ta.value), 900); });
+  ta.addEventListener("blur", () => { clearTimeout(timer); if ((results[t.id]?.note || "") !== ta.value) saveNote(t.id, ta.value); });
+  const saved = el("div", "saved", ""); saved.hidden = true;
+  b.append(ta, saved);
+  c.append(b);
+  paintCard(t.id, c);
+  return c;
+}
+
+function paintCard(id, c = document.getElementById("card-" + id)) {
+  if (!c) return;
+  const r = results[id] || {};
+  c.classList.remove("pass", "fail", "skip");
+  if (r.status) c.classList.add(r.status);
+  c.querySelectorAll(".btn[data-k]").forEach((b) => { b.className = "btn" + (b.dataset.k === r.status ? " on-" + r.status : ""); b.setAttribute("aria-pressed", String(b.dataset.k === r.status)); b.disabled = !canWrite; });
+  const ta = $("textarea", c);
+  if (document.activeElement !== ta) {
+    ta.value = r.note || "";
+    const show = !!(r.note || r.status === "fail");
+    ta.hidden = !show; $(".saved", c).hidden = !show;
+    $(".saved", c).textContent = r.note ? "Saved" : "";
+  }
+  ta.readOnly = !canWrite;
+  $('[data-role="note"]', c).hidden = !ta.hidden || !canWrite;
+}
+
+async function refreshStamps() {
+  const ids = [...new Set(Object.values(results).map((r) => r.by).filter(Boolean))];
+  let ps = {};
+  if (user && ids.length) { try { ps = await user.profiles(ids); } catch (e) {} }
+  for (const [id, r] of Object.entries(results)) {
+    const c = document.getElementById("card-" + id); if (!c) continue;
+    const s = $(".stamp", c); s.replaceChildren();
+    if (!r.status && !r.note) continue;
+    const p = r.by ? ps[r.by] : null;
+    if (p && p.avatarUrl) { const img = el("img"); img.alt = ""; img.src = p.avatarUrl; s.append(img); }
+    const who = p ? (p.isMe ? "you" : (p.name || "a teammate")) : "a teammate";
+    s.append(el("span", null, "by " + who + (r.at ? " · " + fmtTime(r.at) : "")));
+  }
+}
+
+async function write(id, patch) {
+  const prev = results[id] || {};
+  const next = { status: prev.status || null, note: prev.note || "", ...patch, by: myId, at: new Date().toISOString() };
+  results[id] = next;
+  paintCard(id); renderTally(); renderTabs(); refreshStamps();
+  if (!db) return;
+  try { await db.doc("results/" + id).set(next); setSync("Saved. Everyone sees the same board."); }
+  catch (e) {
+    if (e && e.code === "invalid_argument") { canWrite = false; setSync("You can look at this board but not change it. Ask the owner for Contributor access."); Object.keys(BY_ID).forEach((k) => paintCard(k)); }
+    else setSync("Couldn't save just now. Check your connection and try again.");
+  }
+}
+function setStatus(id, status) { if (canWrite) write(id, { status }); }
+function saveNote(id, note) { if (canWrite) { write(id, { note }); const c = document.getElementById("card-" + id); if (c) $(".saved", c).textContent = "Saved"; } }
+function setSync(msg) { $("#sync").textContent = msg; }
+
+renderTally(); renderTabs(); renderMain();
+
+(async () => {
+  try {
+    [db, user] = await Promise.all([window.claude?.use?.("db") ?? null, window.claude?.use?.("user") ?? null]);
+  } catch (e) { db = null; }
+  if (!db) { setSync("This copy can't save to the shared board, so your marks only last until you close the page."); return; }
+  try { myId = user ? await user.id() : null; } catch (e) {}
+  try { const w = user ? await user.can("data.write") : null; if (w === false) { canWrite = false; Object.keys(BY_ID).forEach((k) => paintCard(k)); } } catch (e) {}
+  db.collection("results").onSnapshot((snap) => {
+    for (const k of Object.keys(results)) delete results[k];
+    for (const d of snap.docs) { const v = d.data(); if (v) results[d.id] = v; }
+    if (current === "problems" && !(document.activeElement && document.activeElement.tagName === "TEXTAREA")) renderMain(); else { Object.keys(BY_ID).forEach((k) => paintCard(k)); refreshStamps(); }
+    renderTally(); renderTabs();
+    const done = Object.values(results).filter((r) => r.status).length;
+    setSync(canWrite ? (done ? "Live. Marks from everyone appear here as they happen." : "Live. Nothing marked yet. Start with “Before you start”.") : "You can look at this board but not change it. Ask the owner for Contributor access.");
+  }, () => setSync("Lost the live connection. Reload the page to reconnect."));
+})();
+</script>
