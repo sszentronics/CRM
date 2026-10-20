@@ -54,10 +54,12 @@ export async function searchLeads(query: string, limit = LIMIT): Promise<SearchR
       if (data && data.length > 0) return { hits: data as SearchHit[], elsewhere: false };
       // Not visible to this user: say only that it exists.
       const { data: exists } = await createAdminClient().rpc("existing_lead_phones", { phones: [full] });
-      return { hits: [], elsewhere: Array.isArray(exists) && exists.length > 0 };
+      if (Array.isArray(exists) && exists.length > 0) return { hits: [], elsewhere: true };
+      // Not an exact number we hold. A foreign number typed without "+" is read as Pakistani above,
+      // so fall through and match the digits anywhere in the stored phone as well.
     }
     // Part of a number: match the digits anywhere in the stored phone.
-    const { data } = await supabase.from("leads").select(select).like("phone", `%${digits.replace(/^0/, "")}%`).limit(max);
+    const { data } = await supabase.from("leads").select(select).like("phone", `%${digits.replace(/^0{1,2}/, "")}%`).limit(max);
     return { hits: (data ?? []) as SearchHit[], elsewhere: false };
   }
 

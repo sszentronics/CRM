@@ -25,6 +25,26 @@ const OUT_OF_SCOPE = "Only the Superadmin can manage Admins, analysts and the Su
 /** Effectively permanent. Supabase has no "forever" ban. */
 const DISABLED_BAN = "876000h";
 
+type Admin = ReturnType<typeof createAdminClient>;
+
+/** A field error when this email or phone already belongs to someone, else null. */
+async function findClash(admin: Admin, email: string, phone: string | null): Promise<ActionState> {
+  const { data: byEmail } = await admin.from("profiles").select("id").eq("email", email).maybeSingle();
+  if (byEmail) return fieldClash("email", EMAIL_TAKEN);
+  if (phone) {
+    const { data: byPhone } = await admin.from("profiles").select("id").eq("phone", phone).maybeSingle();
+    if (byPhone) return fieldClash("phone", PHONE_TAKEN);
+  }
+  return null;
+}
+
+const EMAIL_TAKEN = "That email already has an account.";
+const PHONE_TAKEN = "That phone number already belongs to another person.";
+
+function fieldClash(field: "email" | "phone", message: string): ActionState {
+  return { ok: false, message: "Some fields need attention.", fieldErrors: { [field]: [message] } };
+}
+
 const guarded = (run: Parameters<typeof guardedAction>[1]) => guardedAction(MANAGERS, run);
 
 export async function createUser(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -34,6 +54,11 @@ export async function createUser(_prev: ActionState, formData: FormData): Promis
     if (!canManageRole(actor.role, parsed.data.role)) return { ok: false, message: OUT_OF_SCOPE };
     const supabase = await createClient();
     const admin = createAdminClient();
+
+    // Check before inviting: the invite email goes out the moment the account is made,
+    // so a clash found afterwards would leave an email behind for a person who was never added.
+    const clash = await findClash(admin, parsed.data.email, parsed.data.phone);
+    if (clash) return clash;
 
     await createUserCore(
       {
@@ -86,8 +111,17 @@ export async function updateUser(_prev: ActionState, formData: FormData): Promis
     const teamId = input.role === "agent" ? input.teamId! : input.role === "team_lead" ? before.team_id : null;
     const after = { full_name: input.fullName, phone: input.phone, role: input.role, team_id: teamId };
 
+    if (input.phone && input.phone !== before.phone) {
+      const { data: taken } = await createAdminClient().from("profiles").select("id").eq("phone", input.phone).neq("id", input.id).maybeSingle();
+      if (taken) return fieldClash("phone", PHONE_TAKEN);
+    }
+
     const { error } = await supabase.from("profiles").update(after).eq("id", input.id);
-    if (error) return { ok: false, message: friendlyDbError(error) };
+    if (error) {
+      return error.code === "23505" && /phone/.test(error.message ?? "")
+        ? fieldClash("phone", PHONE_TAKEN)
+        : { ok: false, message: friendlyDbError(error) };
+    }
 
     const changes = Object.fromEntries(
       Object.entries(after)

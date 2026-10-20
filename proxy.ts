@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { publicOrigin } from "@/lib/http/origin";
 
 /** Paths open without a session. Everything else sends a signed-out visitor to /login. */
 const PUBLIC_PATHS = ["/login", "/forgot-password", "/auth/", "/offline", "/sw.js", "/manifest.webmanifest"];
@@ -40,8 +41,7 @@ export async function proxy(request: NextRequest) {
 
   const { pathname, search } = request.nextUrl;
   if (!user && !isPublic(pathname)) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    const url = new URL("/login", publicOrigin(request));
     url.search = pathname === "/" ? "" : `?next=${encodeURIComponent(pathname + search)}`;
     const redirect = NextResponse.redirect(url);
     for (const c of response.cookies.getAll()) redirect.cookies.set(c);

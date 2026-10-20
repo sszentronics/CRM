@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ROLES } from "@/lib/auth/roles";
-import { normalisePhone } from "@/lib/format/phone";
+import { normalisePhone, PHONE_HELP } from "@/lib/format/phone";
 import { TEAM_COLORS } from "@/lib/teams";
 
 const fullName = z
@@ -9,7 +9,7 @@ const fullName = z
   .min(2, "Enter the person's full name.")
   .max(80, "Keep the name under 80 characters.");
 
-/** Optional phone, normalised to +92XXXXXXXXXX. */
+/** Optional phone, normalised to E.164 (+92... or any other country). */
 const phone = z
   .string()
   .optional()
@@ -17,7 +17,7 @@ const phone = z
     if (!v) return null;
     const n = normalisePhone(v);
     if (!n) {
-      ctx.addIssue({ code: "custom", message: "That is not a Pakistani phone number. Use the form 0300 1234567." });
+      ctx.addIssue({ code: "custom", message: PHONE_HELP });
       return z.NEVER;
     }
     return n;
@@ -63,7 +63,7 @@ export const idSchema = z.object({ id: uuid });
 const teamName = z
   .string("Enter a team name.")
   .trim()
-  .min(2, "Enter a team name.")
+  .min(2, "A team name needs at least 2 characters.")
   .max(40, "Keep the team name under 40 characters.");
 const teamColor = z.enum(TEAM_COLORS, "Choose a team colour.");
 

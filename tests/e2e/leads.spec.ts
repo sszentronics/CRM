@@ -105,6 +105,73 @@ test.describe("as the Superadmin", () => {
     expect(data).toEqual([{ full_name: "First Owner" }]);
   });
 
+  test("a lead can have a phone number from any country", async ({ page }) => {
+    const digits = (n: number) => String(Math.floor(Math.random() * 10 ** n)).padStart(n, "0");
+    const us = { typed: `+1 415 555 ${digits(4)}`, name: "US Lead" };
+    const uk = { typed: `+44 7911 ${digits(6)}`, name: "UK Lead" };
+    const uae = { typed: `00971 50 ${digits(7)}`, name: "UAE Lead" };
+    const stored = (typed: string) => `+${typed.replace(/\D/g, "").replace(/^00/, "")}`;
+    const db = serviceClient();
+
+    await page.goto("/leads/add");
+    for (const lead of [uk, uae]) {
+      await page.getByLabel("Full name").fill(lead.name);
+      await page.getByLabel("Phone", { exact: true }).fill(lead.typed);
+      await page.getByLabel("Source").selectOption("PR");
+      await page.getByRole("button", { name: "Save and add another" }).click();
+      await expect(page.getByText(`${lead.name} saved. Add the next one.`)).toBeVisible();
+    }
+    // Save opens the lead, which shows the number the way a person writes it.
+    await page.getByLabel("Full name").fill(us.name);
+    await page.getByLabel("Phone", { exact: true }).fill(us.typed);
+    await page.getByLabel("Source").selectOption("PR");
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(page).toHaveURL(/\/lead\/[0-9a-f-]{36}$/);
+    await expect(page.getByText(us.typed, { exact: true })).toBeVisible();
+
+    const wanted = [us, uk, uae].map((l) => stored(l.typed));
+    const { data } = await db.from("leads").select("phone").in("phone", wanted);
+    expect(data!.map((l) => l.phone).sort()).toEqual(wanted.sort());
+  });
+
+  test("a foreign number written two ways is the same lead, and a bad one is refused", async ({ page }) => {
+    const tail = String(Math.floor(Math.random() * 10 ** 4)).padStart(4, "0");
+    const db = serviceClient();
+    const { data: creator } = await db.from("profiles").select("id").eq("email", ACCOUNTS.superadmin.email).single();
+    const { data: first, error } = await db
+      .from("leads")
+      .insert({ full_name: "First Abroad", phone: `+1415777${tail}`, source: "Facebook", created_by: creator!.id })
+      .select("id")
+      .single();
+    if (error) throw error;
+
+    await page.goto("/leads/add");
+    await page.getByLabel("Full name").fill("Second Abroad");
+    await page.getByLabel("Phone", { exact: true }).fill(`001 415 777 ${tail}`);
+    await page.getByLabel("Source").selectOption("PR");
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(page.getByText("That number is already in the system.")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Open the existing lead" })).toHaveAttribute("href", `/lead/${first.id}`);
+
+    await page.getByLabel("Phone", { exact: true }).fill("+1 415");
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(page.getByText(/start with \+ and the country code/)).toBeVisible();
+    const { count } = await db.from("leads").select("id", { count: "exact", head: true }).eq("phone", `+1415777${tail}`);
+    expect(count).toBe(1);
+  });
+
+  test("Pakistani landlines are accepted and stored with +92", async ({ page }) => {
+    const tail = String(Math.floor(Math.random() * 10 ** 7)).padStart(7, "0");
+    await page.goto("/leads/add");
+    await page.getByLabel("Full name").fill("Landline Lead");
+    await page.getByLabel("Phone", { exact: true }).fill(`051 ${tail}`);
+    await page.getByLabel("Source").selectOption("PR");
+    await page.getByRole("button", { name: "Save and add another" }).click();
+    await expect(page.getByText("Landline Lead saved. Add the next one.")).toBeVisible();
+    const { data } = await serviceClient().from("leads").select("phone").eq("phone", `+9251${tail}`);
+    expect(data).toHaveLength(1);
+  });
+
   test("Done when: one lead by form, then 200 by file", async ({ page }) => {
     test.setTimeout(120_000);
     const [single, another, ...many] = await freshPhones(202);

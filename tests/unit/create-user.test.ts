@@ -72,6 +72,6 @@ describe("createUserSchema", () => {
   it("rejects a bad phone with a sentence that says how to fix it", () => {
     const r = createUserSchema.safeParse({ fullName: "Ali", email: "ali@x.test", role: "admin", phone: "12345" });
     expect(r.success).toBe(false);
-    expect(JSON.stringify(r.error?.issues)).toContain("Use the form 0300 1234567");
+    expect(JSON.stringify(r.error?.issues)).toContain("+1 415 555 0100");
   });
 });

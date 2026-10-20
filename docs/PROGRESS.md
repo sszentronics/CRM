@@ -917,3 +917,57 @@ Totals: lint and typecheck clean, 133 unit tests, 304 database tests, 99 browser
 
 - Modules 14 to 16 (owner view with reassign and soft delete, agents adding their own leads, activity log) are written in `BUILD.md` and not started.
 - Not yet shown on the agent's pipeline or Today's calls cards, only on the lead page and All leads.
+
+## Fix round 1: international phone numbers and test-board fixes
+
+Status: **ready for review**. Plan and root causes are in `PLAN.md`.
+
+### Built
+
+- **Any international phone number.** Leads and staff can have a number from any country. Numbers are stored as E.164
+  (`+`, 8 to 15 digits). With no `+` or `00` a number is read as Pakistani, as before, and Pakistani landlines
+  (`051 2220003`, `021 34567890`) are now accepted. Foreign numbers are shown as `+1 415 555 0100`. The same number
+  written two ways (`+1 415...` and `001 415...`) is caught as a duplicate. Search finds foreign numbers with or
+  without the `+`. No new dependency: only the shape is checked, not whether a foreign number is reachable.
+  Migration `20261020000000_international_phones.sql` widens the check on `leads.phone` and `profiles.phone`.
+- **Error messages were hidden (O4, O5, O6, O9, O12).** Drawers are modal dialogs, which sit above any `z-index`, so
+  every error toast was drawn behind the open drawer. Toasts now live in the browser's top layer, and the Users and
+  Teams drawers also show the error inside the drawer. Failed saves no longer wipe what the person typed.
+- **Invite email only after the checks (O4).** A repeated email or phone is found before the invite is sent, so no
+  email goes to someone who was never added. A repeated staff phone shows under the Phone box (O6).
+- **Sign-out and email links (O1).** Redirects use the address the visitor typed, not the address the server listens
+  on. This was the "site cannot be reached" on sign-out.
+- **Referral alert (A15).** The logic was right but only ran from a 15-minute database timer. The timer is now every
+  5 minutes and the check also runs when anyone opens a page (at most once a minute). Never a second alert.
+- **People list over 1,000 rows.** The list read everything in one request and the API caps that at 1,000, so people
+  silently dropped off. It now reads in pages.
+- **Test board.** O4, O6, O9, O22, A8, A15 rewritten; new cards O22b and O22c for foreign numbers.
+
+### Tests
+
+| Test | Result |
+| --- | --- |
+| Unit: Pakistani mobiles and landlines, US/UK/UAE/German/Irish numbers, two spellings equal, 13 rejects, display format | pass |
+| Unit: redirect origin from Host and forwarded headers; sweep runs at most once a minute and never breaks a page | pass |
+| DB: foreign lead accepted, 16 digits and a short `+92` refused | pass |
+| DB: referral sweep alerts every active Admin and the Superadmin once, not disabled Admins, not booked or fresh referrals, respects the setting | pass |
+| E2E: US, UK and UAE leads by form; `001...` caught as a duplicate of `+1...`; bad number refused; landline stored | pass |
+| E2E: foreign staff phone saves; repeated phone refused in the drawer and no auth user or email created | pass |
+| E2E: short and repeated team names, disabling a team's lead: messages visible in the drawer | pass |
+| E2E: Owner resets a password and the email reaches the inbox | pass |
+| E2E: sign-out redirects to the forwarded host | pass |
+
+Totals after resetting the local test database: lint and typecheck clean, 166 unit and integration tests, 317 database
+tests, 107 browser tests passing.
+
+### Not done, or needs you
+
+- **O2 and O12 on the live board** still need a person with an authenticator and the real inbox. The code paths are
+  tested; the manual cards stay.
+- **Foreign numbers need `+` or `00`.** A bare `4155550100` is read as Pakistani. Excel drops the `+` from numeric
+  cells, so import files should keep the phone column as text. Real per-country checks would need libphonenumber; not
+  added without your OK.
+- **Local test database was reset** (`pnpm db:reset`) because it had collected 1,100 test staff and 523 teams over many
+  runs, which slowed one browser test past its timeout. It held no `@tl.test` testing accounts. Run
+  `scripts/reset-test-data.bat` to load the Owner, Admin and Teams A to D again.
+- The error-over-drawer fix is proven through the inline messages; I did not watch the toast itself over a drawer in a browser.

@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Tabs } from "@/components/ui/tabs";
 import { useActionToast } from "@/lib/hooks/use-action-toast";
+import { useKeepFormOnError } from "@/lib/hooks/use-keep-form";
 import { ImportWizard } from "./import-wizard";
 
 type Panel = "single" | "import";
@@ -17,6 +18,7 @@ type Panel = "single" | "import";
 function SingleLeadForm({ sources }: { sources: string[] }) {
   const [state, action, pending] = useActionState(createLead, null);
   const form = useRef<HTMLFormElement>(null);
+  const keepOnError = useKeepFormOnError(form, state);
   const nameInput = useRef<HTMLInputElement>(null);
   // "Save and add another": clear the form and start again on the name.
   useActionToast(state, () => {
@@ -37,7 +39,7 @@ function SingleLeadForm({ sources }: { sources: string[] }) {
 
   return (
     <Card className="max-w-3xl">
-      <form ref={form} action={action} className="flex flex-col gap-5" noValidate>
+      <form ref={form} onSubmitCapture={keepOnError} action={action} className="flex flex-col gap-5" noValidate>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
             <Input
@@ -54,7 +56,8 @@ function SingleLeadForm({ sources }: { sources: string[] }) {
               label="Phone"
               name="phone"
               inputMode="tel"
-              placeholder="0300 1234567"
+              placeholder="0300 1234567 or +1 415 555 0100"
+              hint="Any country. Start with + and the country code for a number outside Pakistan."
               autoComplete="off"
               error={errors.phone?.[0]}
             />

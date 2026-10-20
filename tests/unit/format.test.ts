@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatKarachi, formatPKR, formatPKRCompact, maskTail, normalisePhone } from "@/lib/format";
+import { formatKarachi, formatPhone, formatPKR, formatPKRCompact, maskTail, normalisePhone } from "@/lib/format";
 
 describe("formatPKR", () => {
   it("formats whole rupees with grouping", () => {
@@ -23,15 +23,77 @@ describe("formatPKR", () => {
 });
 
 describe("normalisePhone", () => {
-  it.each(["0300 1234567", "03001234567", "+92 300 1234567", "+923001234567", "0092 300 1234567", "300-1234567"])(
-    "normalises %s",
+  it.each(["0300 1234567", "03001234567", "+92 300 1234567", "+923001234567", "0092 300 1234567", "300-1234567", "92 300 1234567"])(
+    "normalises Pakistani mobile %s",
     (input) => {
       expect(normalisePhone(input)).toBe("+923001234567");
     },
   );
 
-  it.each(["12345", "", "0300 12345", "+1 415 555 0100", "0300 123456a", "00000000000"])("rejects %s", (input) => {
+  it.each([
+    ["051 2220003", "+92512220003"],
+    ["0213 4567890", "+922134567890"],
+    ["043 1234567", "+92431234567"],
+    ["+92 51 2220003", "+92512220003"],
+  ])("normalises Pakistani landline %s", (input, expected) => {
+    expect(normalisePhone(input)).toBe(expected);
+  });
+
+  it.each([
+    ["+1 415 555 0100", "+14155550100"],
+    ["+1 (415) 555-0100", "+14155550100"],
+    ["001 415 555 0100", "+14155550100"],
+    ["+44 7911 123456", "+447911123456"],
+    ["0044 7911 123456", "+447911123456"],
+    ["+971 50 123 4567", "+971501234567"],
+    ["+49 30 12345678", "+493012345678"],
+    ["+353 85 123 4567", "+353851234567"],
+  ])("accepts the international number %s", (input, expected) => {
+    expect(normalisePhone(input)).toBe(expected);
+  });
+
+  it("treats two spellings of one number as the same stored value", () => {
+    expect(normalisePhone("+1 415 555 0100")).toBe(normalisePhone("0014155550100"));
+  });
+
+  it.each([
+    "12345",
+    "",
+    "0300 12345",
+    "0300 123456a",
+    "00000000000",
+    "+1",
+    "+1 415",
+    "+0 415 555 0100",
+    "+1234567890123456",
+    "+92 300 12345",
+    "+92 300 12345678901",
+    "4155550100123",
+    "abc",
+  ])("rejects %s", (input) => {
     expect(normalisePhone(input)).toBeNull();
+  });
+});
+
+describe("formatPhone", () => {
+  it("shows Pakistani mobiles in the local form", () => {
+    expect(formatPhone("+923001234567")).toBe("0300 1234567");
+  });
+
+  it("shows Pakistani landlines with a leading 0", () => {
+    expect(formatPhone("+92512220003")).toBe("0512220003");
+  });
+
+  it.each([
+    ["+14155550100", "+1 415 555 0100"],
+    ["+447911123456", "+44 791 112 3456"],
+    ["+971501234567", "+971 501 234 567"],
+  ])("groups the international number %s", (stored, shown) => {
+    expect(formatPhone(stored)).toBe(shown);
+  });
+
+  it("returns unreadable input unchanged", () => {
+    expect(formatPhone("n/a")).toBe("n/a");
   });
 });
 

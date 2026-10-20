@@ -1,6 +1,6 @@
 -- Module 3: lead intake.
 begin;
-select plan(15);
+select plan(19);
 
 create function pg_temp.make_user(uid uuid, mail text) returns void language sql as $$
   insert into auth.users (id, instance_id, aud, role, email, encrypted_password, created_at, updated_at)
@@ -82,6 +82,14 @@ select throws_ok($$ select pg_temp.add_lead('+923411000009', 'e1000000-0000-0000
   '42501', null, 'a lead records who really added it');
 select throws_ok($$ select pg_temp.add_lead('03001234567', 'e1000000-0000-0000-0000-000000000002') $$,
   '23514', null, 'a phone that is not normalised is rejected');
+select lives_ok($$ select pg_temp.add_lead('+14155550100', 'e1000000-0000-0000-0000-000000000002') $$,
+  'a lead may have a US number');
+select lives_ok($$ select pg_temp.add_lead('+447911123456', 'e1000000-0000-0000-0000-000000000002') $$,
+  'a lead may have a UK number');
+select throws_ok($$ select pg_temp.add_lead('+1415555010012345', 'e1000000-0000-0000-0000-000000000002') $$,
+  '23514', null, 'a number longer than 15 digits is rejected');
+select throws_ok($$ select pg_temp.add_lead('+9230012345', 'e1000000-0000-0000-0000-000000000002') $$,
+  '23514', null, 'a Pakistani number with the wrong length is rejected');
 select is((select count(*)::int from public.leads where phone like '+92341100000%'), 2,
   'an Admin sees every lead in the pool');
 

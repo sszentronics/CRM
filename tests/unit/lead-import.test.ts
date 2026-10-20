@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalisePhone } from "@/lib/format/phone";
+import { normalisePhone, PHONE_HELP } from "@/lib/format/phone";
 import {
   candidatePhones,
   classifyImportRows,
@@ -43,7 +43,7 @@ describe("lead import", () => {
     expect(result.skipped).toEqual([
       { row: 9, kind: "duplicate", reason: "That number appears earlier in this file." },
       { row: 10, kind: "duplicate", reason: "That number is already in the system." },
-      { row: 11, kind: "invalid", reason: "That is not a Pakistani phone number. Use the form 0300 1234567." },
+      { row: 11, kind: "invalid", reason: PHONE_HELP },
     ]);
   });
 

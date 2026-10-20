@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 type ToastKind = "success" | "error" | "info";
@@ -21,6 +21,21 @@ export function useToast() {
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
   const nextId = useRef(1);
+  const tray = useRef<HTMLDivElement>(null);
+
+  // Drawers are modal dialogs, which sit in the browser's top layer above any z-index.
+  // A popover joins the same layer, and re-opening it puts it above a drawer opened later,
+  // so an error raised inside a drawer is never hidden behind it.
+  useEffect(() => {
+    const el = tray.current;
+    if (!el || typeof el.showPopover !== "function") return;
+    try {
+      if (el.matches(":popover-open")) el.hidePopover();
+      if (items.length > 0) el.showPopover();
+    } catch {
+      // Older browsers: the toast still shows, just without the top-layer lift.
+    }
+  }, [items]);
 
   const dismiss = useCallback((id: number) => setItems((all) => all.filter((t) => t.id !== id)), []);
 
@@ -40,8 +55,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={value}>
       {children}
       <div
+        ref={tray}
+        popover="manual"
         aria-live="polite"
-        className="pointer-events-none fixed top-4 right-4 z-50 flex w-[380px] max-w-[calc(100vw-32px)] flex-col gap-2"
+        className="pointer-events-none fixed inset-auto top-4 right-4 z-50 m-0 flex w-[380px] max-w-[calc(100vw-32px)] flex-col gap-2 overflow-visible border-0 bg-transparent p-0"
       >
         {items.map((t) => (
           <div

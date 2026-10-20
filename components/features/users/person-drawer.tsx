@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useId, useState } from "react";
+import { useActionState, useId, useRef, useState } from "react";
 import { createUser, updateUser } from "@/app/(app)/users/actions";
+import { ActionError } from "@/components/ui/action-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -9,6 +10,7 @@ import { Sheet } from "@/components/ui/sheet";
 import { ROLE_LABEL, type Role } from "@/lib/auth/roles";
 import { formatPhone } from "@/lib/format/phone";
 import { useActionToast } from "@/lib/hooks/use-action-toast";
+import { useKeepFormOnError } from "@/lib/hooks/use-keep-form";
 import type { PersonRow, TeamRow } from "./users-screen";
 
 
@@ -47,6 +49,8 @@ export function PersonDrawer({
     onClose();
   }
   useActionToast(state, close);
+  const formRef = useRef<HTMLFormElement>(null);
+  const keepOnError = useKeepFormOnError(formRef, state);
 
   const errors = state?.fieldErrors ?? {};
   const teamOptions = teams.filter((t) => t.is_active).map((t) => ({ value: t.id, label: t.name }));
@@ -69,7 +73,8 @@ export function PersonDrawer({
         </>
       }
     >
-      <form id={formId} action={action} onChange={() => setDirty(true)} className="flex flex-col gap-4" noValidate>
+      <form id={formId} ref={formRef} onSubmitCapture={keepOnError} action={action} onChange={() => setDirty(true)} className="flex flex-col gap-4" noValidate>
+        <ActionError state={state} />
         {editing ? <input type="hidden" name="id" value={person.id} /> : null}
         <Input label="Full name" name="fullName" defaultValue={person?.full_name} error={errors.fullName?.[0]} />
         {editing ? (
@@ -81,9 +86,9 @@ export function PersonDrawer({
           label="Phone"
           name="phone"
           inputMode="tel"
-          placeholder="0300 1234567"
+          placeholder="0300 1234567 or +1 415 555 0100"
           defaultValue={person?.phone ? formatPhone(person.phone) : undefined}
-          hint="Optional."
+          hint="Optional. Any country: start with + and the country code."
           error={errors.phone?.[0]}
         />
         <Select

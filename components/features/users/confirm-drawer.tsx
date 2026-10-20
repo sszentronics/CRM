@@ -2,6 +2,7 @@
 
 import { useActionState, useId } from "react";
 import { sendResetForUser, setUserActive } from "@/app/(app)/users/actions";
+import { ActionError } from "@/components/ui/action-error";
 import { Button } from "@/components/ui/button";
 import { Sheet } from "@/components/ui/sheet";
 import { useActionToast } from "@/lib/hooks/use-action-toast";
@@ -63,7 +64,8 @@ export function ConfirmDrawer({
       }
     >
       {copy && person ? (
-        <form id={formId} action={action}>
+        <form id={formId} action={action} className="flex flex-col gap-4">
+          <ActionError state={state} />
           <input type="hidden" name="id" value={person.id} />
           {kind !== "reset" ? <input type="hidden" name="active" value={String(kind === "enable")} /> : null}
           <p className="text-body text-tl-text-2">{copy.body}</p>

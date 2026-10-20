@@ -222,7 +222,7 @@ export function ImportWizard({ sources }: { sources: string[] }) {
               <Upload aria-hidden className="size-5" />
             </span>
             <span className="text-body font-semibold text-tl-text">Drop the file here, or click to choose it</span>
-            <span className="text-small text-tl-muted">Columns needed: full name, phone and source. City, campaign and notes are optional.</span>
+            <span className="text-small text-tl-muted">Columns needed: full name, phone and source. City, campaign and notes are optional. Numbers outside Pakistan must start with + and the country code.</span>
             <input
               ref={fileInput}
               type="file"

@@ -126,3 +126,19 @@ test.describe("signing out", () => {
     await expect(page).toHaveURL(/\/login/);
   });
 });
+
+test.describe("signing out", () => {
+  test("sends the visitor back to the address they used, not the one the server listens on", async ({ request }) => {
+    const res = await request.get("/auth/signout", {
+      headers: { "x-forwarded-host": "192.168.18.13:3200" },
+      maxRedirects: 0,
+    });
+    expect(res.status()).toBe(307);
+    expect(res.headers().location).toBe("http://192.168.18.13:3200/login");
+  });
+
+  test("an idle sign-out keeps its reason on the login page", async ({ request }) => {
+    const res = await request.get("/auth/signout?reason=idle", { maxRedirects: 0 });
+    expect(res.headers().location).toMatch(/\/login\?reason=idle$/);
+  });
+});

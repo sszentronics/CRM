@@ -124,6 +124,96 @@ test("the Superadmin moves an agent, changes a Team Lead and disables someone", 
   expect(leadA!.team_id).toBeNull();
 });
 
+test("staff may have a foreign phone, and a repeated phone is refused with a message in the drawer", async ({ page }) => {
+  const run = Date.now().toString(36);
+  const digits = String(Math.floor(Math.random() * 10 ** 9)).padStart(9, "0");
+  const phone = `+44 7${digits.slice(0, 3)} ${digits.slice(3)}`;
+  const db = serviceClient();
+  await page.goto("/users");
+
+  await page.getByRole("button", { name: "Add person" }).first().click();
+  let drawer = page.getByRole("dialog", { name: "Add a person" });
+  await drawer.getByLabel("Full name").fill(`Abroad One ${run}`);
+  await drawer.getByLabel("Email").fill(`e2e-${run}-abroad1@tradinglabs.test`);
+  await drawer.getByLabel("Phone").fill(phone);
+  await drawer.getByLabel("Role").selectOption({ label: "Technical Analyst" });
+  await drawer.getByRole("button", { name: "Add person" }).click();
+  await expect(page.getByText(`Abroad One ${run} added.`)).toBeVisible({ timeout: 20_000 });
+
+  await page.getByRole("button", { name: "Add person" }).first().click();
+  drawer = page.getByRole("dialog", { name: "Add a person" });
+  await drawer.getByLabel("Full name").fill(`Abroad Two ${run}`);
+  await drawer.getByLabel("Email").fill(`e2e-${run}-abroad2@tradinglabs.test`);
+  await drawer.getByLabel("Phone").fill(phone);
+  await drawer.getByLabel("Role").selectOption({ label: "Technical Analyst" });
+  await drawer.getByRole("button", { name: "Add person" }).click();
+  // The message sits inside the drawer, under the Phone box, and the drawer stays open.
+  await expect(drawer.getByText("That phone number already belongs to another person.")).toBeVisible({ timeout: 20_000 });
+  await expect(drawer).toBeVisible();
+
+  // The second person was never created, so no invite email went out for them.
+  const { data } = await db.from("profiles").select("email").like("email", `e2e-${run}-abroad%`);
+  expect(data!.map((p) => p.email)).toEqual([`e2e-${run}-abroad1@tradinglabs.test`]);
+  const { data: authUsers } = await db.auth.admin.listUsers({ perPage: 1000 });
+  expect(authUsers.users.some((u) => u.email === `e2e-${run}-abroad2@tradinglabs.test`)).toBe(false);
+
+  const stored = `+44${phone.replace(/\D/g, "").slice(2)}`;
+  const { data: saved } = await db.from("profiles").select("phone").eq("email", `e2e-${run}-abroad1@tradinglabs.test`).single();
+  expect(saved!.phone).toBe(stored);
+});
+
+test("team names and Team Leads: clear messages for a short name, a repeated name and a lead who leads", async ({ page }) => {
+  test.setTimeout(120_000);
+  const run = Date.now().toString(36);
+  await page.goto("/users");
+  await addPerson(page, { name: `Boss One ${run}`, email: `e2e-${run}-boss1@tradinglabs.test`, role: "Team Lead" });
+  await addPerson(page, { name: `Boss Two ${run}`, email: `e2e-${run}-boss2@tradinglabs.test`, role: "Team Lead" });
+  await addTeam(page, { name: `Echo ${run}`, color: "Cyan", lead: `Boss One ${run}` });
+
+  // A one-letter name and the same name in other capitals are both refused, inside the drawer.
+  await page.getByRole("button", { name: "Add team" }).first().click();
+  const drawer = page.getByRole("dialog", { name: "Add a team" });
+  await drawer.getByText("Coral", { exact: true }).click();
+  await drawer.getByLabel("Team Lead").selectOption({ label: `Boss Two ${run}` });
+  await drawer.getByLabel("Team name").fill("E");
+  await drawer.getByRole("button", { name: "Add team" }).click();
+  await expect(drawer.getByText("A team name needs at least 2 characters.")).toBeVisible();
+  await drawer.getByLabel("Team name").fill(`ECHO ${run}`.toUpperCase());
+  await drawer.getByRole("button", { name: "Add team" }).click();
+  await expect(drawer.getByText("A team with that name already exists. Choose another name.")).toBeVisible({ timeout: 20_000 });
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: /discard/i }).click();
+
+  // Switching off the lead of a team is refused, and the reason is on screen.
+  await page.getByLabel("Search people").fill(`Boss One ${run}`);
+  await page.getByRole("button", { name: `Disable Boss One ${run}` }).click();
+  const confirm = page.getByRole("dialog", { name: `Disable Boss One ${run}?` });
+  await confirm.getByRole("button", { name: "Disable account" }).click();
+  await expect(confirm.getByText("This person leads a team. Change the Team Lead first.")).toBeVisible({ timeout: 20_000 });
+  const { data } = await serviceClient().from("profiles").select("is_active").eq("email", `e2e-${run}-boss1@tradinglabs.test`).single();
+  expect(data!.is_active).toBe(true);
+});
+
+test("the Superadmin resets someone else's password and the email arrives with a working link", async ({ page, request }) => {
+  const run = Date.now().toString(36);
+  const email = `e2e-${run}-reset@tradinglabs.test`;
+  await page.goto("/users");
+  await addPerson(page, { name: `Reset Target ${run}`, email, role: "Technical Analyst" });
+
+  await page.getByLabel("Search people").fill(`Reset Target ${run}`);
+  await page.getByRole("button", { name: `Reset password for Reset Target ${run}` }).click();
+  await page.getByRole("dialog", { name: `Send Reset Target ${run} a password reset?` }).getByRole("button", { name: "Send reset link" }).click();
+  await expect(page.getByText(`Reset link sent to ${email}.`)).toBeVisible({ timeout: 20_000 });
+
+  // The local test inbox holds the invite and the reset. The reset link points back at this app.
+  await expect
+    .poll(async () => {
+      const res = await request.get(`http://127.0.0.1:54324/api/v1/search?query=${encodeURIComponent(`to:${email} subject:password`)}`);
+      return res.ok() ? ((await res.json()) as { messages: unknown[] }).messages.length : 0;
+    }, { timeout: 20_000 })
+    .toBeGreaterThan(0);
+});
+
 test.describe("as an admin", () => {
   test.use({ storageState: storageStateFor("admin") });
 

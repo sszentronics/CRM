@@ -1,4 +1,4 @@
-import { normalisePhone } from "@/lib/format/phone";
+import { normalisePhone, PHONE_HELP } from "@/lib/format/phone";
 
 /** A lead as typed in the form or read from one row of an import file. */
 export type RawLead = {
@@ -42,7 +42,7 @@ export function validateLead(
   const phoneText = trimmed(raw.phone);
   const phone = phoneText ? normalisePhone(phoneText) : null;
   if (!phoneText) errors.phone = "Enter the lead's phone number.";
-  else if (!phone) errors.phone = "That is not a Pakistani phone number. Use the form 0300 1234567.";
+  else if (!phone) errors.phone = PHONE_HELP;
 
   const sourceText = trimmed(raw.source);
   const source = sources.find((s) => s.toLowerCase() === sourceText.toLowerCase());

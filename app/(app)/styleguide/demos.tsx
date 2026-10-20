@@ -9,6 +9,7 @@ import { Select } from "@/components/ui/select";
 import { Sheet } from "@/components/ui/sheet";
 import { useToast } from "@/components/ui/toast";
 import { formatPKR } from "@/lib/format/money";
+import { PHONE_HELP } from "@/lib/format/phone";
 
 export function SheetDemo() {
   const [open, setOpen] = useState(false);
@@ -92,7 +93,7 @@ export function FormDemo() {
         label="Phone"
         defaultValue="12345"
         inputMode="tel"
-        error="That is not a Pakistani phone number. Use the form 0300 1234567."
+        error={PHONE_HELP}
       />
       <Select
         label="Source"

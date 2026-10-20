@@ -1,12 +1,14 @@
 "use client";
 
-import { useActionState, useId, useState } from "react";
+import { useActionState, useId, useRef, useState } from "react";
 import { changeTeamLead, createTeam, updateTeam } from "@/app/(app)/users/actions";
+import { ActionError } from "@/components/ui/action-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Sheet } from "@/components/ui/sheet";
 import { useActionToast } from "@/lib/hooks/use-action-toast";
+import { useKeepFormOnError } from "@/lib/hooks/use-keep-form";
 import { TEAM_COLORS, teamColorVar, type TeamColor } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 import type { PersonRow, TeamRow } from "./users-screen";
@@ -76,6 +78,8 @@ export function TeamDrawer({
     onClose();
   }
   useActionToast(state, close);
+  const formRef = useRef<HTMLFormElement>(null);
+  const keepOnError = useKeepFormOnError(formRef, state);
   const errors = state?.fieldErrors ?? {};
   const leads = freeLeads(people);
 
@@ -96,7 +100,8 @@ export function TeamDrawer({
         </>
       }
     >
-      <form id={formId} action={action} onChange={() => setDirty(true)} className="flex flex-col gap-5" noValidate>
+      <form id={formId} ref={formRef} onSubmitCapture={keepOnError} action={action} onChange={() => setDirty(true)} className="flex flex-col gap-5" noValidate>
+        <ActionError state={state} />
         {editing ? <input type="hidden" name="id" value={team.id} /> : null}
         <Input label="Team name" name="name" defaultValue={team?.name} error={errors.name?.[0]} />
         <ColorPicker defaultValue={team?.color} error={errors.color?.[0]} />
@@ -131,6 +136,8 @@ export function ChangeLeadDrawer({
   const formId = useId();
   const [state, action, pending] = useActionState(changeTeamLead, null);
   useActionToast(state, onClose);
+  const leadFormRef = useRef<HTMLFormElement>(null);
+  const keepLeadOnError = useKeepFormOnError(leadFormRef, state);
   const leads = freeLeads(people);
   const current = people.find((p) => p.id === team?.team_lead_id);
 
@@ -152,7 +159,8 @@ export function ChangeLeadDrawer({
       }
     >
       {team ? (
-        <form id={formId} action={action} className={cn("flex flex-col gap-4")} noValidate>
+        <form id={formId} ref={leadFormRef} onSubmitCapture={keepLeadOnError} action={action} className={cn("flex flex-col gap-4")} noValidate>
+          <ActionError state={state} />
           <input type="hidden" name="teamId" value={team.id} />
           {leads.length > 0 ? (
             <Select

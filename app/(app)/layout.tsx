@@ -6,6 +6,7 @@ import { TopBar } from "@/components/features/shell/top-bar";
 import { needsMfa } from "@/lib/auth/roles";
 import { requireSession } from "@/lib/auth/session";
 import { getSetting } from "@/lib/settings/get-setting";
+import { runSweepsIfDue } from "@/lib/sweeps";
 import { createClient } from "@/lib/supabase/server";
 
 export default function AppLayout({ children }: LayoutProps<"/">) {
@@ -20,10 +21,12 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
 async function AuthedShell({ children }: { children: React.ReactNode }) {
   const { profile } = await requireSession();
   const supabase = await createClient();
+  const sweep = runSweepsIfDue();
   const [idleMinutes, { count: unread }] = await Promise.all([
     needsMfa(profile.role) ? getSetting(supabase, "idle_signout_minutes") : Promise.resolve(null),
     supabase.from("notifications").select("id", { count: "exact", head: true }).is("read_at", null),
   ]);
+  await sweep;
   const user = {
     id: profile.id,
     unread: unread ?? 0,
