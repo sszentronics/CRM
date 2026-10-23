@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "css": "npx -y @tailwindcss/cli@4.3.3 -i styles/tailwind-source.css -o app/globals.css --minify",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",

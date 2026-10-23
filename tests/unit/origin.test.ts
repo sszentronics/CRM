@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { describe, expect, it } from "vitest";
-import { publicOrigin } from "@/lib/http/origin";
+import { publicOrigin, redirectTo } from "@/lib/http/origin";
 
 function req(url: string, headers: Record<string, string>) {
   return new NextRequest(url, { headers });
@@ -24,5 +24,18 @@ describe("publicOrigin", () => {
   it("falls back to the request origin when the host header looks wrong", () => {
     const r = req("http://localhost:3200/x", { host: "evil.com/\@x" });
     expect(publicOrigin(r)).toBe("http://localhost:3200");
+  });
+});
+
+describe("redirectTo", () => {
+  it("sends a relative Location so the browser stays on the domain it is using", () => {
+    const res = redirectTo("/login?reason=signed-out");
+    expect(res.status).toBe(307);
+    expect(res.headers.get("location")).toBe("/login?reason=signed-out");
+  });
+
+  it("refuses to redirect off the site", () => {
+    expect(redirectTo("//evil.com").headers.get("location")).toBe("/");
+    expect(redirectTo("https://evil.com").headers.get("location")).toBe("/");
   });
 });
