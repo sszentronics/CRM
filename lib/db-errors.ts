@@ -5,6 +5,10 @@ const OWN_MESSAGES = [
   "Only the Superadmin can change name, role or team.",
   "This person leads a team. Change the Team Lead first.",
   "Choose an active Team Lead who does not lead another team.",
+  "Your demo has ended. Ask for a custom site or the default CRM to continue.",
+  "That belongs to another workspace.",
+  "Custom colours are part of a client workspace. Ask us to upgrade you.",
+  "Only the Superadmin changes branding.",
 ];
 
 /** Turn a Postgres error into a sentence that says what is wrong and how to fix it. */

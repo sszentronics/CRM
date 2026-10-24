@@ -191,7 +191,7 @@ export function BrokersScreen({ brokers }: { brokers: BrokerRow[] }) {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Brokers"
-        description="The brokers Trading Labs places clients with, and the documents each one needs."
+        description="The brokers your company places clients with, and the documents each one needs."
         actions={
           <Button onClick={() => setDrawer({ broker: null })}>
             <Plus aria-hidden className="size-4" />

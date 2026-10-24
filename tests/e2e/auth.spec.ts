@@ -22,11 +22,11 @@ test.describe("signing in", () => {
     });
   }
 
-  test("the login screen has the logo on purple and no sign-up", async ({ page }) => {
+  test("the login screen has the logo on the brand panel and offers a demo sign-up", async ({ page }) => {
     await page.goto("/login");
     await expectBrandPage(page);
     await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
-    await expect(page.getByText(/sign up|create account|register/i)).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Start a 14-day demo" })).toBeVisible();
   });
 
   test("a wrong password says what to do", async ({ page }) => {

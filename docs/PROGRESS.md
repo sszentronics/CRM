@@ -971,3 +971,24 @@ tests, 107 browser tests passing.
   runs, which slowed one browser test past its timeout. It held no `@tl.test` testing accounts. Run
   `scripts/reset-test-data.bat` to load the Owner, Admin and Teams A to D again.
 - The error-over-drawer fix is proven through the inline messages; I did not watch the toast itself over a drawer in a browser.
+
+
+## Workspaces, demos and the QuantraPro look (24 Oct 2026)
+
+Status: **ready for review. Database changes are not yet verified**: Docker was not running on the dev machine, so
+`pnpm test:db` and `pnpm test:e2e` have not run against the new migration.
+
+### Built
+
+- Restyle to the QuantraPro look: tokens, Inter, deep green rail, light and dark themes with a top-bar toggle, dark green Arena. DESIGN.md and AGENTS.md updated (owner decision).
+- Migration `20261024000000_workspaces.sql`: `workspaces` (plan client or trial, trial end, theme, logo), `workspace_id` on every table with a restrictive RLS policy, a row trigger that fills the workspace and blocks cross-workspace writes and writes after a demo ends, workspace-scoped views for every security-definer function, per-workspace uniqueness (lead phone, CNIC, team and broker names, deposit reference, settings), `provision_workspace`, `choose_default_crm`, `update_workspace_branding`, `workspace_requests`.
+- App: `/signup` (public), `/workspace` (setup choice, requests, branding for clients), `/platform` (QuantraPro team), trial banner and demo-ended screen, workspace colours and logo in the shell and the Arena.
+- Tests: `tests/unit/workspace.test.ts`, `supabase/tests/16_workspaces.test.sql`; colour constants in the e2e specs updated.
+
+### Open items
+
+- Run `pnpm db:start && pnpm test:db && pnpm test:e2e` and fix anything the migration broke before deploying.
+- Sign-up skips email confirmation and has no rate limit or CAPTCHA. Add both before it is public.
+- A new demo workspace starts empty. Seed sample data (or reuse `seed-demo`) if demos should open full.
+- The only storage bucket today is public avatars (one folder per user), so nothing in storage needed a workspace rule. Revisit if KYC files or deposit proofs are added.
+- "Custom site" is a request the team follows up by hand.

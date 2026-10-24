@@ -3,10 +3,12 @@
 import { redirect } from "next/navigation";
 import { safeNext } from "@/lib/auth/access";
 import { ROLE_HOME, needsMfa, type Role } from "@/lib/auth/roles";
-import { emailSchema, newPasswordSchema, signInSchema, totpCodeSchema } from "@/lib/auth/schemas";
+import { emailSchema, newPasswordSchema, signInSchema, signUpSchema, totpCodeSchema } from "@/lib/auth/schemas";
 import { logAudit } from "@/lib/audit";
 import { fieldErrors, formObject, type ActionState } from "@/lib/forms";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { TRIAL_DAYS } from "@/lib/workspace/trial";
 
 const DISABLED = "Account disabled, contact your Admin.";
 
@@ -28,15 +30,15 @@ export async function signIn(_prev: ActionState, formData: FormData): Promise<Ac
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, is_active")
+    .select("role, is_active, workspaces!inner (plan)")
     .eq("id", data.user.id)
-    .maybeSingle<{ role: Role; is_active: boolean }>();
+    .maybeSingle<{ role: Role; is_active: boolean; workspaces: { plan: "client" | "trial" } }>();
   if (!profile || !profile.is_active) {
     await supabase.auth.signOut();
     return { ok: false, message: DISABLED };
   }
 
-  if (needsMfa(profile.role)) {
+  if (needsMfa(profile.role, profile.workspaces.plan)) {
     redirect(next ? `/login/mfa?next=${encodeURIComponent(next)}` : "/login/mfa");
   }
   redirect(homeFor(profile.role, next));
@@ -74,9 +76,13 @@ export async function setNewPassword(_prev: ActionState, formData: FormData): Pr
   }
   await logAudit({ actorId: user.id, action: "auth.password_set", entity: "profile", entityId: user.id });
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle<{ role: Role }>();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, workspaces!inner (plan)")
+    .eq("id", user.id)
+    .maybeSingle<{ role: Role; workspaces: { plan: "client" | "trial" } }>();
   if (!profile) redirect("/auth/signout?reason=disabled");
-  redirect(needsMfa(profile.role) ? "/login/mfa" : ROLE_HOME[profile.role]);
+  redirect(needsMfa(profile.role, profile.workspaces.plan) ? "/login/mfa" : ROLE_HOME[profile.role]);
 }
 
 export type EnrollResult = { ok: true; factorId: string; qrCode: string; secret: string } | { ok: false; message: string };
@@ -132,4 +138,48 @@ export async function verifyTotp(_prev: ActionState, formData: FormData): Promis
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle<{ role: Role }>();
   if (!profile) redirect("/auth/signout?reason=disabled");
   redirect(homeFor(profile.role, (formData.get("next") as string | null) ?? null));
+}
+
+/**
+ * Public sign-up: one new demo workspace with its owner as Superadmin. The owner is signed in straight away
+ * and lands on the Workspace page to choose the default CRM or ask for a custom site.
+ */
+export async function signUp(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = signUpSchema.safeParse(formObject(formData));
+  if (!parsed.success) return fieldErrors(parsed.error);
+  const { company, fullName, email, password } = parsed.data;
+
+  const admin = createAdminClient();
+  const { data: created, error } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: fullName },
+  });
+  if (error || !created.user) {
+    if (error?.code === "email_exists") {
+      return { ok: false, message: "That email already has an account. Sign in instead.", fieldErrors: { email: ["That email already has an account."] } };
+    }
+    if (error?.code === "weak_password") {
+      return { ok: false, message: "That password was not accepted. Use at least 10 characters.", fieldErrors: { password: ["Choose a stronger password."] } };
+    }
+    return { ok: false, message: "We could not create your workspace. Try again in a minute." };
+  }
+
+  const { error: provisionError } = await admin.rpc("provision_workspace", {
+    p_user: created.user.id,
+    p_email: email,
+    p_full_name: fullName,
+    p_company: company,
+    p_trial_days: TRIAL_DAYS,
+  });
+  if (provisionError) {
+    await admin.auth.admin.deleteUser(created.user.id);
+    return { ok: false, message: "We could not create your workspace. Try again in a minute." };
+  }
+
+  const supabase = await createClient();
+  const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+  if (signInError) redirect("/login");
+  redirect("/workspace");
 }

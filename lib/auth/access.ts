@@ -29,6 +29,9 @@ export const ROUTE_ACCESS: Record<string, readonly Role[]> = {
   "/brokers": SUPER,
   "/targets": SUPER,
   "/prizes": ADMINS,
+  "/workspace": SUPER,
+  // Open to every role here; the page itself checks the PLATFORM_ADMIN_EMAILS list.
+  "/platform": ALL,
   "/settings": SUPER,
   "/audit-log": SUPER,
   "/styleguide": SUPER,

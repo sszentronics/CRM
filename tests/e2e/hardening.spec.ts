@@ -4,7 +4,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { ROUTE_ACCESS } from "../../lib/auth/access";
 import { ROLES, type Role } from "../../lib/auth/roles";
 import { loadEnv, storageStateFor, type AccountKey } from "./helpers/accounts";
-import { BRAND_PURPLE, expectBrandPage } from "./helpers/brand";
+import { BRAND_RAIL, expectBrandPage } from "./helpers/brand";
 
 test.use({ viewport: { width: 1440, height: 900 } });
 
@@ -52,7 +52,7 @@ test.describe("role matrix: every role against every route", () => {
   }
 });
 
-test("every screen passes the white and purple check, and the Arena its dark purple check", async ({ browser }) => {
+test("every screen passes the QuantraPro check, and the Arena its dark green check", async ({ browser }) => {
   test.setTimeout(180_000);
   const page = await browser.newPage({ storageState: storageStateFor("superadmin") });
   for (const route of ROUTES.filter((r) => r !== "/arena")) {
@@ -68,30 +68,30 @@ test("every screen passes the white and purple check, and the Arena its dark pur
   await page.goto("/arena");
   await expect(page.getByRole("heading", { name: "The Arena" })).toBeVisible();
   const image = await page.evaluate(() => getComputedStyle(document.querySelector(".tl-arena")!).backgroundImage);
-  expect(image).toContain("rgb(44, 15, 92)");
-  expect(image).toContain("rgb(28, 8, 59)");
+  expect(image).toContain("rgb(14, 42, 28)");
+  expect(image).toContain("rgb(6, 20, 12)");
   await page.close();
 });
 
-test("the sign-in and offline screens are white and purple, and open without signing in", async ({ browser }) => {
+test("the sign-in and offline screens are QuantraPro, and open without signing in", async ({ browser }) => {
   const page = await browser.newPage();
   for (const route of ["/login", "/forgot-password", "/offline"]) {
     await page.goto(route);
     await expect(page.locator("main, body").first()).toBeVisible();
-    expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), route).toBe("rgb(247, 245, 252)");
+    expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), route).toBe("rgb(250, 250, 250)");
   }
   await page.goto("/offline");
   await expect(page.getByRole("heading", { name: "You are offline" })).toBeVisible();
-  // The white logo sits on the brand purple panel.
-  const panel = await page.locator("img[alt='Trading Labs']").evaluate((el) => getComputedStyle(el.parentElement!).backgroundColor);
-  expect(panel).toBe(BRAND_PURPLE);
+  // The white logo sits on the brand panel.
+  const panel = await page.locator("img[alt='QuantraPro']").evaluate((el) => getComputedStyle(el.parentElement!).backgroundColor);
+  expect(panel).toBe(BRAND_RAIL);
   await page.close();
 });
 
 test("the app is installable: manifest, icons and an offline-ready service worker", async ({ request }) => {
   const manifest = await (await request.get("/manifest.webmanifest")).json();
-  expect(manifest.theme_color).toBe("#220B47");
-  expect(manifest.background_color).toBe("#220B47");
+  expect(manifest.theme_color).toBe("#08150F");
+  expect(manifest.background_color).toBe("#08150F");
   expect(manifest.display).toBe("standalone");
   const sizes = manifest.icons.map((i: { sizes: string }) => i.sizes);
   expect(sizes).toContain("192x192");

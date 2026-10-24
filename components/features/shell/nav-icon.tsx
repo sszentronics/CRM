@@ -1,10 +1,12 @@
 import {
+  Building2,
   CalendarCheck,
   CircleUser,
   ClipboardList,
   FileCheck2,
   FileDown,
   Gauge,
+  Globe,
   Gift,
   Inbox,
   Landmark,
@@ -53,6 +55,8 @@ const ICONS: Record<NavIconName, LucideIcon> = {
   audit: ScrollText,
   profile: CircleUser,
   styleguide: Palette,
+  workspace: Building2,
+  platform: Globe,
 };
 
 export function NavIcon({ name, className }: { name: NavIconName; className?: string }) {

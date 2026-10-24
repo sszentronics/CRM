@@ -21,8 +21,9 @@ export const ROLE_HOME: Record<Role, string> = {
 /** Roles that need the TOTP second step and are signed out when idle. */
 export const MFA_ROLES: readonly Role[] = ["superadmin", "admin"];
 
-export function needsMfa(role: Role) {
-  return MFA_ROLES.includes(role);
+/** Demo workspaces skip the authenticator step so a new sign-up can start straight away. */
+export function needsMfa(role: Role, plan?: "client" | "trial" | null) {
+  return plan !== "trial" && MFA_ROLES.includes(role);
 }
 
 /** Roles the Admin may add and manage (owner decision, 8 Oct 2026). The Superadmin manages every role. */

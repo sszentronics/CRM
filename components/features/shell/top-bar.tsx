@@ -7,12 +7,13 @@ import { Bell } from "@/components/features/notifications/bell";
 import { GlobalSearch } from "@/components/features/search/global-search";
 import { Avatar } from "@/components/ui/avatar";
 import { ROLE_LABEL, type Role } from "@/lib/auth/roles";
-import { BrandMark, NavLinks } from "./side-nav";
+import { BrandMark, NavLinks, type WorkspaceBrand } from "./side-nav";
+import { ThemeToggle } from "./theme-toggle";
 
 export type ShellUser = { id: string; fullName: string; role: Role; photoUrl: string | null; unread: number };
 
-/** White top bar: lead search, the notifications bell and the signed-in user. */
-export function TopBar({ user }: { user: ShellUser }) {
+/** Top bar: lead search, theme toggle, the notifications bell and the signed-in user. */
+export function TopBar({ user, brand, platform }: { user: ShellUser; brand: WorkspaceBrand; platform: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDialogElement>(null);
 
@@ -37,6 +38,7 @@ export function TopBar({ user }: { user: ShellUser }) {
       <GlobalSearch />
 
       <div className="ml-auto flex items-center gap-2">
+        <ThemeToggle />
         <Bell userId={user.id} initialUnread={user.unread} />
         <span aria-hidden className="mx-1 h-6 w-px bg-tl-line" />
         <Link
@@ -70,10 +72,10 @@ export function TopBar({ user }: { user: ShellUser }) {
         onClick={(e) => {
           if (e.target === e.currentTarget) setMenuOpen(false);
         }}
-        className="fixed inset-y-0 left-0 m-0 h-dvh max-h-none w-[280px] max-w-[85vw] border-0 bg-tl-brand p-0 backdrop:bg-[rgb(27_16_48/0.35)]"
+        className="fixed inset-y-0 left-0 m-0 h-dvh max-h-none w-[280px] max-w-[85vw] border-0 bg-tl-brand p-0 backdrop:bg-black/40"
       >
         <div className="flex h-[var(--tl-topbar-h)] items-center justify-between px-5">
-          <BrandMark />
+          <BrandMark brand={brand} />
           <button
             type="button"
             aria-label="Close menu"
@@ -84,7 +86,7 @@ export function TopBar({ user }: { user: ShellUser }) {
           </button>
         </div>
         <nav aria-label="Main" className="px-3 pb-6">
-          <NavLinks role={user.role} onNavigate={() => setMenuOpen(false)} />
+          <NavLinks role={user.role} platform={platform} onNavigate={() => setMenuOpen(false)} />
         </nav>
       </dialog>
     </header>

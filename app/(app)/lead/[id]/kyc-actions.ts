@@ -9,6 +9,7 @@ import { dateToKarachiInput } from "@/lib/format/dates";
 import { fieldErrors, formObject, type ActionState } from "@/lib/forms";
 import { KYC_FIELD_LABELS, kycFormSchema, type KycField } from "@/lib/kyc/fields";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getWorkspace } from "@/lib/workspace/get";
 import { createClient } from "@/lib/supabase/server";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -78,9 +79,10 @@ export async function saveKycFields(_prev: ActionState, formData: FormData): Pro
     const { data: before } = await supabase.from("kyc_profiles").select("*").eq("id", profileId).maybeSingle();
     if (!before) throw new KycError("This lead belongs to another team.");
 
-    // CNIC numbers are unique across every client in the system.
+    // CNIC numbers are unique across every client in the workspace.
     if (v.cnic_number) {
-      const { data: owner } = await createAdminClient().rpc("lead_with_cnic", { p_cnic: v.cnic_number });
+      const workspace = await getWorkspace();
+      const { data: owner } = await createAdminClient().rpc("lead_with_cnic", { p_workspace: workspace?.id, p_cnic: v.cnic_number });
       if (owner && owner !== before.lead_id) {
         const m = "This CNIC already belongs to another client in the system.";
         return { ok: false, message: m, fieldErrors: { cnic_number: [m] } };

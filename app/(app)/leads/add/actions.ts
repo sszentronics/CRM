@@ -20,6 +20,7 @@ import {
 import { DUPLICATE_MESSAGE, validateLead } from "@/lib/leads/validate";
 import { getSetting } from "@/lib/settings/get-setting";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getWorkspace } from "@/lib/workspace/get";
 import { createClient } from "@/lib/supabase/server";
 
 const ADMINS: Role[] = ["superadmin", "admin"];
@@ -28,9 +29,13 @@ const ADMINS: Role[] = ["superadmin", "admin"];
 async function existingPhones(phones: string[]): Promise<Set<string>> {
   if (phones.length === 0) return new Set();
   const out = new Set<string>();
+  const workspace = await getWorkspace();
   // Chunk so very large imports stay well under request limits.
   for (let i = 0; i < phones.length; i += 500) {
-    const { data, error } = await createAdminClient().rpc("existing_lead_phones", { phones: phones.slice(i, i + 500) });
+    const { data, error } = await createAdminClient().rpc("existing_lead_phones", {
+      p_workspace: workspace?.id,
+      phones: phones.slice(i, i + 500),
+    });
     if (error) throw new Error(`Duplicate check failed: ${error.message}`);
     for (const p of (data ?? []) as string[]) out.add(p);
   }
@@ -150,6 +155,7 @@ export async function commitImport(rows: ImportRow[], fileName: string): Promise
   return asAdmin(async (actorId) => {
     const c = await classify(rows);
     const supabase = await createClient();
+    const workspaceId = (await getWorkspace())?.id;
     const skipped = [...c.skipped];
     let added = 0;
 
@@ -166,8 +172,9 @@ export async function commitImport(rows: ImportRow[], fileName: string): Promise
             campaign: r.campaign,
             notes: r.notes,
             created_by: actorId,
+            workspace_id: workspaceId,
           })),
-          { onConflict: "phone", ignoreDuplicates: true },
+          { onConflict: "workspace_id,phone", ignoreDuplicates: true },
         )
         .select("phone");
       if (error) throw new UserFacingError("The import stopped part way. Leads saved so far are kept. Try the rest again.");

@@ -94,7 +94,7 @@ select is((select count(*)::int from public.leads where phone like '+92341100000
   'an Admin sees every lead in the pool');
 
 -- The duplicate-check function is for the server only
-select throws_ok($$ select public.existing_lead_phones(array['+923411000001']) $$,
+select throws_ok($$ select public.existing_lead_phones('00000000-0000-4000-8000-000000000001', array['+923411000001']) $$,
   '42501', null, 'signed-in users cannot call the server-only duplicate check');
 
 reset role;

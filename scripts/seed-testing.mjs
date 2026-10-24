@@ -8,6 +8,7 @@
 // Refuses to run against anything but a local database.
 import { existsSync, writeFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
+import { scoped } from "./scoped-client.mjs";
 
 if (existsSync(".env.local")) process.loadEnvFile(".env.local");
 
@@ -23,7 +24,7 @@ if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(host)) {
   process.exit(1);
 }
 
-const db = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
+const db = scoped(createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } }));
 const DOMAIN = "tl.test";
 const password = process.env.TEST_PASSWORD || "TLtest@2026";
 

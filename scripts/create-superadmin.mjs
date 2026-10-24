@@ -7,6 +7,7 @@
 // http://127.0.0.1:54324 to see it.
 import { existsSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
+import { scoped } from "./scoped-client.mjs";
 
 if (existsSync(".env.local")) process.loadEnvFile(".env.local");
 
@@ -24,7 +25,7 @@ if (!url || !serviceKey) {
   process.exit(1);
 }
 
-const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
+const admin = scoped(createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } }));
 const lower = email.toLowerCase();
 
 const { data, error } = await admin.auth.admin.inviteUserByEmail(lower, { data: { full_name: fullName } });

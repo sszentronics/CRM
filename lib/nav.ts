@@ -25,6 +25,8 @@ export type NavIcon =
   | "prizes"
   | "settings"
   | "audit"
+  | "workspace"
+  | "platform"
   | "profile"
   | "styleguide";
 
@@ -75,9 +77,11 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/brokers", label: "Brokers", icon: "brokers" },
       { href: "/targets", label: "Targets", icon: "targets" },
       { href: "/prizes", label: "Team prizes", icon: "prizes" },
+      { href: "/workspace", label: "Workspace", icon: "workspace" },
       { href: "/settings", label: "Settings", icon: "settings" },
       { href: "/audit-log", label: "Audit log", icon: "audit" },
       { href: "/styleguide", label: "Styleguide", icon: "styleguide" },
+      { href: "/platform", label: "All workspaces", icon: "platform" },
     ],
   },
 ];

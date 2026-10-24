@@ -25,7 +25,7 @@ pnpm superadmin:create you@example.com "Your Name"
 pnpm dev                      # http://localhost:3000
 ```
 
-There is no sign-up. `pnpm superadmin:create` makes the first Superadmin and emails a set-password link. Locally,
+Companies sign up for a 14-day demo at `/signup` and get their own workspace. `pnpm superadmin:create` makes the first Superadmin and emails a set-password link. Locally,
 emails land in Mailpit at http://127.0.0.1:54324. On first sign-in the Superadmin scans a QR code with an
 authenticator app; Admin and Superadmin enter a 6-digit code on every sign-in after that. The Superadmin then adds
 everyone else from **Users and teams**.
@@ -129,3 +129,12 @@ VM. The database is a hosted Supabase project.
 - Admin and Superadmin sessions need the second sign-in step; privileges in the database check it too.
 - The audit log is append-only and readable only by the Superadmin.
 - Client documents are not stored. Only the typed KYC details are, and lists show the last four digits.
+
+## Workspaces and demos
+
+Each company is a workspace (`workspaces` table). Trading Labs is the first client workspace and keeps its data.
+
+- **Demo:** `/signup` creates a workspace with a 14-day trial and its owner as Superadmin (no authenticator step in demos). The owner picks the default CRM or asks for a custom site on `/workspace`. After 14 days the workspace is read-only and shows a request form. Data is kept.
+- **Client:** a demo promoted by the QuantraPro team. It has no end date and gets the Branding page: company name, main colour and sidebar colour.
+- **QuantraPro team:** set `PLATFORM_ADMIN_EMAILS` (comma-separated) in `.env.local`. Those people see `/platform`: every workspace, requests, "Make client" and "+7 days".
+- **Isolation:** every table carries `workspace_id`; see the `20261024000000_workspaces` migration and `supabase/tests/16_workspaces.test.sql`.

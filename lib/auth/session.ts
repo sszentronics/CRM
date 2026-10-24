@@ -14,6 +14,8 @@ export type Profile = {
   team_id: string | null;
   photo_url: string | null;
   is_active: boolean;
+  /** Plan of the person's workspace. Demo workspaces skip the TOTP step. */
+  plan: "client" | "trial";
 };
 
 export type SessionContext = {
@@ -34,13 +36,16 @@ export const getSessionContext = cache(async (): Promise<SessionContext | null> 
   const [{ data: profile }, { data: aal }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, full_name, email, phone, role, team_id, photo_url, is_active")
+      .select("id, full_name, email, phone, role, team_id, photo_url, is_active, workspaces!inner (plan)")
       .eq("id", user.id)
-      .maybeSingle<Profile>(),
+      .maybeSingle<Omit<Profile, "plan"> & { workspaces: { plan: "client" | "trial" } }>(),
     supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
   ]);
 
-  return { userId: user.id, profile: profile ?? null, aal: (aal?.currentLevel as "aal1" | "aal2" | null) ?? null };
+  const flat: Profile | null = profile
+    ? { ...profile, plan: profile.workspaces.plan }
+    : null;
+  return { userId: user.id, profile: flat, aal: (aal?.currentLevel as "aal1" | "aal2" | null) ?? null };
 });
 
 /**
@@ -51,7 +56,7 @@ export async function requireSession(): Promise<SessionContext & { profile: Prof
   const ctx = await getSessionContext();
   if (!ctx) redirect("/login");
   if (!ctx.profile || !ctx.profile.is_active) redirect("/auth/signout?reason=disabled");
-  if (needsMfa(ctx.profile.role) && ctx.aal !== "aal2") redirect("/login/mfa");
+  if (needsMfa(ctx.profile.role, ctx.profile.plan) && ctx.aal !== "aal2") redirect("/login/mfa");
   return ctx as SessionContext & { profile: Profile };
 }
 

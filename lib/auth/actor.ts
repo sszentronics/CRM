@@ -17,7 +17,7 @@ export async function requireActor(roles: readonly Role[]): Promise<Profile> {
   const ctx = await getSessionContext();
   const profile = ctx?.profile;
   if (!ctx || !profile || !profile.is_active) throw new PermissionError("Sign in to do that.");
-  if (needsMfa(profile.role) && ctx.aal !== "aal2") throw new PermissionError("Enter your 6-digit code first.");
+  if (needsMfa(profile.role, profile.plan) && ctx.aal !== "aal2") throw new PermissionError("Enter your 6-digit code first.");
   if (!roles.includes(profile.role)) throw new PermissionError();
   return profile;
 }

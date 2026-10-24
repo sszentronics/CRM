@@ -1,3 +1,4 @@
+import { TRADING_LABS_WORKSPACE } from "../../scripts/scoped-client.mjs";
 import { readFileSync } from "node:fs";
 import { expect, test, type Page } from "@playwright/test";
 import { parseCsv, toCsv } from "../../lib/leads/import";
@@ -16,7 +17,7 @@ async function freshPhones(count: number): Promise<string[]> {
       const local = `0345${String(Math.floor(Math.random() * 10_000_000)).padStart(7, "0")}`;
       if (!out.has(local)) batch.add(local);
     }
-    const { data } = await serviceClient().rpc("existing_lead_phones", { phones: [...batch].map(toStored) });
+    const { data } = await serviceClient().rpc("existing_lead_phones", { p_workspace: TRADING_LABS_WORKSPACE, phones: [...batch].map(toStored) });
     const taken = new Set((data ?? []) as string[]);
     for (const p of batch) if (!taken.has(toStored(p))) out.add(p);
   }

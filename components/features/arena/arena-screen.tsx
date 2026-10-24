@@ -24,7 +24,7 @@ const ROTATE_MS = 20_000;
 const BURST_MS = 1_200;
 const SHARDS = 12;
 
-const muted = "text-[#d6ccf2]";
+const muted = "text-[#cfe6d9]";
 const panel = "rounded-card border border-white/10 bg-white/[0.06]";
 
 // A ticking clock for TV mode, read the React way so render stays pure.
@@ -199,7 +199,7 @@ function Panel({ title, children, className }: { title: string; children: React.
 
 type SideTab = "agents" | "live" | "analysts";
 
-export function ArenaScreen({ initial, role, tv }: { initial: ArenaData; role: Role; tv: boolean }) {
+export function ArenaScreen({ initial, role, tv, brand }: { initial: ArenaData; role: Role; tv: boolean; brand: { name: string; logoPath: string | null } }) {
   const reduced = useReducedMotion();
   const [data, setData] = useState(initial);
   const [period, setPeriod] = useState<Period>("month");
@@ -277,7 +277,13 @@ export function ArenaScreen({ initial, role, tv }: { initial: ArenaData; role: R
     <div className={cn("mx-auto flex min-h-dvh w-full flex-col gap-5 px-4 py-5 lg:px-8", tv ? "max-w-[1840px] gap-4 py-6" : "max-w-[1440px]", showYou && "pb-24")}>
       <header className="flex flex-wrap items-center gap-x-6 gap-y-3">
         <span className="flex items-center gap-3">
-          <Image src="/brand/tl-logo.png" alt="Trading Labs" width={tv ? 69 : 36} height={tv ? 72 : 38} priority />
+          {brand.logoPath ? (
+            <Image src={brand.logoPath} alt={brand.name} width={tv ? 69 : 36} height={tv ? 72 : 38} priority />
+          ) : (
+            <span aria-hidden className="flex items-center justify-center rounded-control bg-tl-primary font-semibold text-white" style={{ width: tv ? 69 : 36, height: tv ? 69 : 36 }}>
+              {brand.name.charAt(0).toUpperCase()}
+            </span>
+          )}
           <h1 className={cn("tl-display text-white", tv ? "text-display-l" : "text-display-m")}>The Arena</h1>
         </span>
         {tv ? (
@@ -293,7 +299,7 @@ export function ArenaScreen({ initial, role, tv }: { initial: ArenaData; role: R
                   onClick={() => choosePeriod(p.value)}
                   className={cn(
                     "h-9 rounded-[6px] px-3 text-label font-semibold transition-colors",
-                    period === p.value ? "bg-white text-tl-brand" : "text-[#d6ccf2] hover:bg-white/10 hover:text-white",
+                    period === p.value ? "bg-white text-tl-brand" : "text-[#cfe6d9] hover:bg-white/10 hover:text-white",
                   )}
                 >
                   {p.label}
@@ -382,7 +388,7 @@ export function ArenaScreen({ initial, role, tv }: { initial: ArenaData; role: R
               type="button"
               aria-selected={tab === t}
               onClick={() => setTab(t)}
-              className={cn("h-9 flex-1 rounded-[6px] text-label font-semibold capitalize", tab === t ? "bg-white text-tl-brand" : "text-[#d6ccf2]")}
+              className={cn("h-9 flex-1 rounded-[6px] text-label font-semibold capitalize", tab === t ? "bg-white text-tl-brand" : "text-[#cfe6d9]")}
             >
               {t === "live" ? "Live" : t === "agents" ? "Top agents" : "Top analysts"}
             </button>
@@ -416,7 +422,7 @@ export function ArenaScreen({ initial, role, tv }: { initial: ArenaData; role: R
         <a
           href={data.me.kind === "agent" ? `#agent-${viewerId}` : "#"}
           aria-label="Your standing"
-          className="fixed inset-x-0 bottom-0 z-20 flex items-center justify-center gap-4 border-t border-white/15 bg-[#220b47] px-4 py-3"
+          className="fixed inset-x-0 bottom-0 z-20 flex items-center justify-center gap-4 border-t border-white/15 bg-tl-brand px-4 py-3"
         >
           <span className="text-label font-semibold text-white">You</span>
           <RankBadge rank={data.me.rank} size={32} />

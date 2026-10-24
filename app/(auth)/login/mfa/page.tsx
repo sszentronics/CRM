@@ -27,11 +27,11 @@ async function MfaGate({ searchParams }: { searchParams: PageProps<"/login/mfa">
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, is_active")
+    .select("role, is_active, workspaces!inner (plan)")
     .eq("id", user.id)
-    .maybeSingle<{ role: Role; is_active: boolean }>();
+    .maybeSingle<{ role: Role; is_active: boolean; workspaces: { plan: "client" | "trial" } }>();
   if (!profile || !profile.is_active) redirect("/auth/signout?reason=disabled");
-  if (!needsMfa(profile.role)) redirect(ROLE_HOME[profile.role]);
+  if (!needsMfa(profile.role, profile.workspaces.plan)) redirect(ROLE_HOME[profile.role]);
 
   const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
   if (aal?.currentLevel === "aal2") redirect(safeNext(profile.role, next) ?? ROLE_HOME[profile.role]);
@@ -47,7 +47,7 @@ async function MfaGate({ searchParams }: { searchParams: PageProps<"/login/mfa">
         </h1>
         <p className="text-body text-tl-muted">
           {verified
-            ? "Open your authenticator app and enter the 6-digit code for Trading Labs CRM."
+            ? "Open your authenticator app and enter the 6-digit code for QuantraPro."
             : "Admin accounts need a second step. Scan the code with an authenticator app such as Google Authenticator or Microsoft Authenticator, then enter the 6-digit code it shows."}
         </p>
       </div>

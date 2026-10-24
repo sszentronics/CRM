@@ -29,7 +29,7 @@ test.afterAll(async () => {
 const lane = (page: Page, team: WorldTeam) => page.getByRole("listitem", { name: new RegExp(`^${team.name}, rank`) });
 
 for (const width of [1024, 1440, 1920]) {
-  test(`the Arena is dark purple from top to bottom at ${width} px`, async ({ browser }) => {
+  test(`the Arena is dark green from top to bottom at ${width} px`, async ({ browser }) => {
     const run = runId();
     const team = await arenaTeam(run, "AR1");
     const agent = await browser.newPage({ viewport: { width, height: 800 } });
@@ -43,9 +43,9 @@ for (const width of [1024, 1440, 1920]) {
       const probe = (y: number) => document.elementFromPoint(window.innerWidth / 2, y)?.closest(".tl-arena") !== null;
       return { image, top: probe(4), bottom: probe(window.innerHeight - 4), tall: el.getBoundingClientRect().height >= window.innerHeight };
     });
-    // The gradient runs from --tl-arena-top to --tl-arena-bottom, both purple, never black.
-    expect(stage.image).toContain("rgb(44, 15, 92)");
-    expect(stage.image).toContain("rgb(28, 8, 59)");
+    // The gradient runs from --tl-arena-top to --tl-arena-bottom, both deep green, never black.
+    expect(stage.image).toContain("rgb(14, 42, 28)");
+    expect(stage.image).toContain("rgb(6, 20, 12)");
     expect(stage.top && stage.bottom && stage.tall).toBe(true);
     // No horizontal scroll at any width.
     expect(await agent.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);

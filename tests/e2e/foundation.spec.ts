@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { storageStateFor } from "./helpers/accounts";
-import { BRAND_PURPLE, expectBrandPage, hasHorizontalScroll } from "./helpers/brand";
+import { BRAND_RAIL, expectBrandPage, hasHorizontalScroll } from "./helpers/brand";
 
 // The styleguide is a Superadmin screen since Module 1.
 test.use({ storageState: storageStateFor("superadmin") });
@@ -17,17 +17,17 @@ for (const vp of VIEWPORTS) {
   test.describe(`styleguide at ${vp.width} px`, () => {
     test.use({ viewport: vp });
 
-    test("uses the white and purple theme with no horizontal scroll", async ({ page }) => {
+    test("uses the QuantraPro theme with no horizontal scroll", async ({ page }) => {
       await page.goto("/styleguide");
       await expectBrandPage(page);
       expect(await hasHorizontalScroll(page)).toBe(false);
     });
 
-    test("shows the logo on the purple sidebar with alt text", async ({ page }) => {
+    test("shows the logo on the brand sidebar with alt text", async ({ page }) => {
       await page.goto("/styleguide");
       const sidebar = page.locator("aside");
       await expect(sidebar).toBeVisible();
-      expect(await sidebar.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(BRAND_PURPLE);
+      expect(await sidebar.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(BRAND_RAIL);
       const logo = sidebar.getByRole("img", { name: "Trading Labs" });
       await expect(logo).toBeVisible();
       await expect(logo).toHaveAttribute("alt", "Trading Labs");

@@ -1,9 +1,9 @@
 import { expect, type Page } from "@playwright/test";
 
 /** --tl-bg, the light page background on every app route. */
-export const PAGE_BG = "rgb(247, 245, 252)";
-/** --tl-brand, the purple of the sidebar and every surface the white logo sits on. */
-export const BRAND_PURPLE = "rgb(34, 11, 71)";
+export const PAGE_BG = "rgb(250, 250, 250)";
+/** --tl-brand, the deep green of the sidebar and every surface the logo sits on. */
+export const BRAND_RAIL = "rgb(8, 21, 15)";
 
 /**
  * Every e2e spec calls this (BUILD.md section 8). Asserts the white-and-purple
@@ -52,7 +52,7 @@ export async function expectBrandPage(page: Page) {
   });
 
   expect(result.dark, "no full-width container in the content may be dark").toEqual([]);
-  for (const bg of result.logoBgs) expect(bg, "the white logo sits on brand purple").toBe("rgb(34, 11, 71)");
+  for (const bg of result.logoBgs) expect(bg, "the logo sits on the brand rail").toBe(BRAND_RAIL);
 }
 
 /** True when the page scrolls sideways. */

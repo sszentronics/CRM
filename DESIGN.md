@@ -4,56 +4,58 @@ This file tells you how the app looks, moves and talks. `BUILD.md` tells you wha
 
 ## 1. The vibe
 
-**A clean, professional sales workspace in white and purple, with a scoreboard at its heart.**
+**The QuantraPro workspace: clean, quiet and trustworthy, with a scoreboard at its heart.** (Owner decision, 24 Oct 2026: the app moved from white and purple to the QuantraPro look, to match the QuantraPro marketing site.)
 
-The people using this are sales agents, Team Leads and managers in Islamabad, working on laptops between calls. The CRM should feel like a serious financial tool they trust with client money and documents, and still make the competition on verified deposits easy to see.
+The people using this are sales agents, Team Leads and managers working on laptops between calls. The CRM should feel like a serious financial tool they trust with client money and documents, and still make the competition on verified deposits easy to see.
 
 Three ideas carry the whole design:
 
-1. **White and purple.** A light page, white cards, and a deep purple sidebar where the white TL logo lives. One confident purple for actions.
-2. **The slant.** The TL logo is cut at a 30 degree lean. That cut is the app's signature shape, used only on the things that are about winning.
-3. **Money you can watch move.** Verified deposits are the only thing that is green, counts up, or celebrates.
+1. **Quiet surfaces, one green.** Neutral page and white cards with hairline borders, a deep green rail where the logo lives, and one confident green for actions. Light and dark themes.
+2. **The slant.** The cut at a 30 degree lean is the app's signature shape, used only on the things that are about winning.
+3. **Money you can watch move.** Verified deposits are the only thing that counts up or celebrates.
 
 Everything else stays quiet and orderly so those three land.
 
+**Workspaces.** Every company has its own workspace. A client workspace may replace the main colour (`--tl-primary`, with its hover, soft, link and focus tokens) and the rail colour (`--tl-brand`, `--tl-brand-raised`) at runtime from the Workspace page; `lib/workspace/theme.ts` validates the colours (white text must reach 4.5 to 1) and writes the CSS. Demo workspaces always show the QuantraPro defaults. Nothing else is themable.
+
 ## 2. Logo
 
-- File: `public/brand/tl-logo.png`. It is a white "TL" monogram on a transparent background.
-- Because it is white, it only ever sits on `--tl-brand` purple: the sidebar, the menu drawer, the login panel, app icons and the Arena. Never on the white page, never on a photo, never recoloured, never with a shadow or outline.
-- Keep clear space around it equal to a quarter of its width.
-- Sizes: 28 px in the sidebar next to the "Trading Labs" wordmark, 48 px on the login screen, 72 px on the Arena in TV mode.
-- App icon and favicon: the logo centred on a `--tl-brand` square with 20 percent padding.
-- Alt text is always "Trading Labs".
+- QuantraPro: `public/brand/quantrapro-logo.svg`, used on the sign-in screens, error pages and as "Powered by". Alt text "QuantraPro".
+- A workspace may have its own logo (`workspaces.logo_path`, for example `public/brand/tl-logo.png` for Trading Labs). Without one the sidebar shows the company's initial on a `--tl-primary` tile.
+- Logos only sit on `--tl-brand` (the rail), never on the page, never recoloured, never with a shadow or outline.
+- Keep clear space around a logo equal to a quarter of its width. Sizes: 28 px in the sidebar, 44 px on the sign-in screen, 72 px on the Arena in TV mode.
+- Alt text is the company name.
 
 ## 3. Colour
 
-The page is light, surfaces are white, and purple carries the brand. If a screen reads as grey or as a dark theme, it is wrong. The Arena is the one dark purple page.
+The page is a light neutral, surfaces are white, and green carries the brand. The dark theme (`html[data-theme="dark"]`, toggle in the top bar, OS default on first visit) swaps every token; components never use raw hex. The Arena is always the dark green page.
 
 ### Base
 
-| Token | Hex | Use |
-| --- | --- | --- |
-| `--tl-bg` | `#F7F5FC` | Page background on every app route |
-| `--tl-surface` | `#FFFFFF` | Cards, drawers, tables, top bar, inputs |
-| `--tl-raised` | `#F1EDFA` | Hover, selected rows, disabled inputs |
-| `--tl-line` | `#E4DEF2` | Borders and dividers, 1 px |
-| `--tl-line-strong` | `#CFC6E6` | Input and secondary button borders |
-| `--tl-text` | `#1B1030` | Headings, amounts, main text |
-| `--tl-text-2` | `#3D3452` | Body text |
-| `--tl-muted` | `#6B6385` | Labels, timestamps, helper text |
+| Token | Light | Dark | Use |
+| --- | --- | --- | --- |
+| `--tl-bg` | `#FAFAFA` | `#070C0A` | Page background on every app route |
+| `--tl-surface` | `#FFFFFF` | `#0F1814` | Cards, drawers, tables, top bar, inputs |
+| `--tl-raised` | `#F0F0F3` | `#16231C` | Hover, selected rows, disabled inputs |
+| `--tl-line` | `#E6E8EB` | `#1A2A21` | Borders and dividers, 1 px |
+| `--tl-line-strong` | `#C9CCD1` | `#2A3E32` | Input and secondary button borders |
+| `--tl-text` | `#171717` | `#F2F8F4` | Headings, amounts, main text |
+| `--tl-text-2` | `#3A3D42` | `#C3D1C8` | Body text |
+| `--tl-muted` | `#666A72` | `#8FA398` | Labels, timestamps, helper text |
 
 ### Brand
 
-| Token | Hex | Use |
-| --- | --- | --- |
-| `--tl-brand` | `#220B47` | Sidebar, menu drawer, logo tiles |
-| `--tl-brand-raised` | `#3B1D78` | Hover inside the sidebar |
-| `--tl-brand-text` | `#FFFFFF` | Text and logo on brand purple |
-| `--tl-brand-muted` | `#C9BDF0` | Inactive menu items and group labels |
-| `--tl-primary` | `#5B2EC9` | Primary button fill, links, active states |
-| `--tl-primary-hover` | `#4A22A8` | Primary button hover |
-| `--tl-primary-soft` | `#EFE9FC` | Avatar initials, soft highlights |
-| `--tl-focus` | `#7C4DFF` | Focus ring |
+| Token | Light | Dark | Use |
+| --- | --- | --- | --- |
+| `--tl-brand` | `#08150F` | `#030A06` | Sidebar, menu drawer, logo tiles |
+| `--tl-brand-raised` | `#0E1F16` | `#0E1F16` | Hover inside the sidebar |
+| `--tl-brand-text` | `#FFFFFF` | `#FFFFFF` | Text and logo on the rail |
+| `--tl-brand-muted` | `#8FB0A0` | `#8FB0A0` | Inactive menu items and group labels |
+| `--tl-primary` | `#057940` | `#0E8A4C` | Primary button fill, active states |
+| `--tl-primary-hover` | `#03562C` | `#0B7440` | Primary button hover |
+| `--tl-primary-soft` | `#E6F5EC` | `#12281C` | Avatar initials, soft highlights |
+| `--tl-link` | `#057940` | `#4ADE9A` | Links |
+| `--tl-focus` | `#0E9F57` | `#34C77B` | Focus ring |
 
 ### Meaning
 
@@ -61,9 +63,9 @@ These three colours carry meaning and are never used as decoration.
 
 | Token | Hex | Means |
 | --- | --- | --- |
-| `--tl-win` | `#0D7050` | Verified money, and only verified money. A green candle. |
-| `--tl-danger` | `#C8254A` | Overdue, rejected, errors. A red candle. |
-| `--tl-wait` | `#A35A00` | Waiting on someone: pending, due soon. |
+| `--tl-win` | `#057940` (dark `#4ADE9A`) | Verified money, and only verified money. It shares the brand green, so it is told apart by where it appears: amounts and the verified chip. |
+| `--tl-danger` | `#C8254A` (dark `#FF7A93`) | Overdue, rejected, errors. A red candle. |
+| `--tl-wait` | `#A35A00` (dark `#F2B04A`) | Waiting on someone: pending, due soon. |
 
 **Exception, asked for by the owner (12 Oct 2026):** the contact-freshness chip on leads uses its own three tokens,
 `--tl-fresh-green` (`#2E7D32`, 0 to 3 days since the last contact), `--tl-fresh-yellow` (`#8A6500`, 4 to 7 days) and
@@ -76,14 +78,14 @@ A stage chip uses its colour as text, the same colour mixed at 10 percent with w
 
 | Stages | Token | Hex |
 | --- | --- | --- |
-| New, Assigned | `--tl-stage-idle` | `#6B6385` |
+| New, Assigned | `--tl-stage-idle` | `#666A72` |
 | No answer, Follow-up | `--tl-stage-call` | `#A35A00` |
 | Interested, Post-session follow-up | `--tl-stage-hot` | `#1D64C8` |
 | With Technical Analysis | `--tl-stage-analyst` | `#7A3FD1` |
 | Documents pending | `--tl-stage-docs` | `#0A6A62` |
 | Deposit recorded | `--tl-stage-recorded` | `#266A41` |
-| Deposit verified | `--tl-stage-verified` | `#0D7050` |
-| Not interested, Invalid | `--tl-stage-closed` | `#635B7C` |
+| Deposit verified | `--tl-stage-verified` | `#057940` |
+| Not interested, Invalid | `--tl-stage-closed` | `#5F636B` |
 
 ### Teams
 
@@ -100,7 +102,7 @@ Each team picks one colour. It appears on that team's Arena lane, progress bars,
 
 ### Arena background
 
-The Arena uses a vertical gradient from `#2C0F5C` at the top to `#1C083B` at the bottom, with one soft radial glow of `#7C4DFF` at 18 percent opacity behind the team race. Both ends of the gradient are purple. Do not let it fade to black. On the Arena, text uses white and `#D6CCF2`.
+The Arena uses a vertical gradient from `#0E2A1C` at the top to `#06140C` at the bottom, with one soft radial glow of `#0E9F57` at 18 percent opacity behind the team race. Both ends of the gradient are deep green. Do not let it fade to black. On the Arena, text uses white and `#CFE6D9`.
 
 Every text colour above is checked at 4.5 to 1 or better against `--tl-bg`, `--tl-surface` and `--tl-raised`, and the brand text colours against `--tl-brand` and `--tl-brand-raised`. White on `--tl-primary` is 7.8 to 1. The styleguide test enforces this.
 
@@ -110,23 +112,23 @@ Two families, with clearly different jobs.
 
 | Role | Family | Settings |
 | --- | --- | --- |
-| Display: amounts, ranks, screen titles, the Arena | **Archivo** | Weight 700, upright, tight tracking (-0.02em) |
-| Everything else | **Figtree** | Weight 400 for text, 500 for labels, 600 for buttons and titles |
+| Display: amounts, ranks, screen titles, the Arena | **Inter** | Weight 600, tight tracking (-0.02em) |
+| Everything else | **Inter** | Weight 400 for text, 500 for labels, 600 for buttons and titles |
 
 | Token | Size / line height | Family | Use |
 | --- | --- | --- | --- |
-| `display-xl` | 64 / 68 | Archivo | Arena totals in TV mode |
-| `display-l` | 36 / 40 | Archivo | Arena totals, tile numbers |
-| `display-m` | 24 / 30 | Archivo | Screen titles |
-| `title` | 16 / 24 | Figtree 600 | Card, drawer and section titles |
-| `body` | 14 / 20 | Figtree 400 | Text, inputs, table cells |
-| `label` | 13 / 18 | Figtree 500 | Field labels, table headers |
-| `small` | 12 / 16 | Figtree 500 | Timestamps, helper text, chips |
+| `display-xl` | 64 / 68 | Inter 600 | Arena totals in TV mode |
+| `display-l` | 36 / 40 | Inter 600 | Arena totals, tile numbers |
+| `display-m` | 24 / 30 | Inter 600 | Screen titles |
+| `title` | 16 / 24 | Inter 600 | Card, drawer and section titles |
+| `body` | 14 / 20 | Inter 400 | Text, inputs, table cells |
+| `label` | 13 / 18 | Inter 500 | Field labels, table headers |
+| `small` | 12 / 16 | Inter 500 | Timestamps, helper text, chips |
 
 - Amounts always use tabular figures (`font-variant-numeric: tabular-nums`) so they do not jump as they count.
 - Sentence case everywhere. No all-caps labels.
 - Line length for text stays under 70 characters.
-- Load both families with `next/font` and no layout shift.
+- Load Inter with `next/font` and no layout shift.
 
 ## 5. The slant
 

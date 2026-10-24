@@ -25,7 +25,8 @@ If the two files disagree, stop and ask. If something is not covered, ask. Do no
 - Never count a deposit that is not `verified`.
 - Never show a client's name on a leaderboard, the Arena, or the live feed.
 - Never expose a KYC file by public URL. Signed URLs only, 5 minutes at most.
-- Never break the white and purple theme: light page, white surfaces, purple sidebar and accents. The white logo only sits on brand purple. Only the Arena is dark. See `DESIGN.md`.
+- Never break the QuantraPro theme: neutral page, white surfaces, deep green rail and one green accent, in light and dark. Logos only sit on the rail. The Arena is always the dark green page. Only a client workspace may change `--tl-primary` and `--tl-brand`, through `lib/workspace/theme.ts`. See `DESIGN.md`.
+- Never read or write another workspace's rows. Every table has `workspace_id`, a restrictive RLS policy and a write trigger. New tables follow the same pattern, and server code that uses the service role must name the workspace.
 - Never write UI copy that promises profit, returns or "guaranteed" anything.
 - Never change the stack, add a paid service, or add a large dependency without asking.
 - Never commit secrets. Use `.env.local` and keep `.env.example` up to date.

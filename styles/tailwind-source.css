@@ -1,40 +1,41 @@
 @import "tailwindcss" source("..");
 
 /*
- * Design tokens. Source of truth: DESIGN.md section 14.
- * White and purple: a deep purple brand rail (where the white logo lives),
- * a light page, white surfaces, one purple accent. Components use these, never raw hex.
+ * Design tokens. Source of truth: DESIGN.md.
+ * QuantraPro look: Inter, hairline borders, a deep green rail, one green accent, light and dark themes.
+ * A client workspace may override --tl-primary and --tl-brand at runtime (see lib/workspace/theme.ts).
+ * Components use these tokens, never raw hex.
  */
 :root {
   color-scheme: light;
 
   /* Page and surfaces */
-  --tl-bg: #f7f5fc;
+  --tl-bg: #fafafa;
   --tl-surface: #ffffff;
-  --tl-raised: #f1edfa;
-  --tl-line: #e4def2;
-  --tl-line-strong: #cfc6e6;
+  --tl-raised: #f0f0f3;
+  --tl-line: #e6e8eb;
+  --tl-line-strong: #c9ccd1;
 
   /* Brand */
-  --tl-primary: #5b2ec9;
-  --tl-primary-hover: #4a22a8;
-  --tl-primary-soft: #efe9fc;
-  --tl-link: #5b2ec9;
-  --tl-focus: #7c4dff;
+  --tl-primary: #057940;
+  --tl-primary-hover: #03562c;
+  --tl-primary-soft: #e6f5ec;
+  --tl-link: #057940;
+  --tl-focus: #0e9f57;
 
   /* Text */
-  --tl-text: #1b1030;
-  --tl-text-2: #3d3452;
-  --tl-muted: #6b6385;
+  --tl-text: #171717;
+  --tl-text-2: #3a3d42;
+  --tl-muted: #666a72;
 
-  /* Brand rail (sidebar, logo tiles): the original Trading Labs purple */
-  --tl-brand: #220b47;
-  --tl-brand-raised: #3b1d78;
+  /* Brand rail (sidebar, logo tiles): QuantraPro deep green */
+  --tl-brand: #08150f;
+  --tl-brand-raised: #0e1f16;
   --tl-brand-text: #ffffff;
-  --tl-brand-muted: #c9bdf0;
+  --tl-brand-muted: #8fb0a0;
 
   /* Meaning */
-  --tl-win: #0d7050;
+  --tl-win: #057940;
   --tl-danger: #c8254a;
   --tl-wait: #a35a00;
 
@@ -45,14 +46,14 @@
   --tl-fresh-red: #c8254a;
 
   /* Stages (text colour; fill is 10%, border 28%) */
-  --tl-stage-idle: #6b6385;
+  --tl-stage-idle: #666a72;
   --tl-stage-call: #a35a00;
   --tl-stage-hot: #1d64c8;
   --tl-stage-analyst: #7a3fd1;
   --tl-stage-docs: #0a6a62;
   --tl-stage-recorded: #266a41;
   --tl-stage-verified: #0d7050;
-  --tl-stage-closed: #635b7c;
+  --tl-stage-closed: #5f636b;
 
   /* Teams: used as fills (bars, rings), never as body text */
   --tl-team-cyan: #0ea5c6;
@@ -62,20 +63,56 @@
   --tl-team-sky: #3b7ddd;
   --tl-team-lilac: #9b6beb;
 
-  /* The Arena keeps its dark purple stage */
-  --tl-arena-top: #2c0f5c;
-  --tl-arena-bottom: #1c083b;
+  /* The Arena keeps its dark stage, now deep green */
+  --tl-arena-top: #0e2a1c;
+  --tl-arena-bottom: #06140c;
 
   --tl-slant: 30deg;
   --tl-radius-control: 8px;
   --tl-radius-card: 12px;
   --tl-radius-sheet: 16px;
 
-  --tl-shadow-card: 0 1px 2px rgb(27 16 48 / 0.04), 0 1px 3px rgb(27 16 48 / 0.06);
-  --tl-shadow-pop: 0 12px 32px rgb(27 16 48 / 0.14), 0 2px 6px rgb(27 16 48 / 0.08);
+  --tl-shadow-card: 0 1px 2px rgb(0 0 0 / 0.04), 0 1px 3px rgb(0 0 0 / 0.05);
+  --tl-shadow-pop: 0 12px 32px rgb(0 0 0 / 0.14), 0 2px 6px rgb(0 0 0 / 0.08);
 
   --tl-sidebar-w: 248px;
   --tl-topbar-h: 64px;
+}
+
+/* Dark theme: html[data-theme="dark"], chosen with the toggle in the top bar. Follows the OS on first visit. */
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --tl-bg: #070c0a;
+  --tl-surface: #0f1814;
+  --tl-raised: #16231c;
+  --tl-line: #1a2a21;
+  --tl-line-strong: #2a3e32;
+  --tl-primary: #0e8a4c;
+  --tl-primary-hover: #0b7440;
+  --tl-primary-soft: #12281c;
+  --tl-link: #4ade9a;
+  --tl-focus: #34c77b;
+  --tl-text: #f2f8f4;
+  --tl-text-2: #c3d1c8;
+  --tl-muted: #8fa398;
+  --tl-brand: #030a06;
+  --tl-brand-raised: #0e1f16;
+  --tl-win: #4ade9a;
+  --tl-danger: #ff7a93;
+  --tl-wait: #f2b04a;
+  --tl-fresh-green: #5ee0a0;
+  --tl-fresh-yellow: #f2c94c;
+  --tl-fresh-red: #ff7a93;
+  --tl-stage-idle: #9aa9a0;
+  --tl-stage-call: #f2b04a;
+  --tl-stage-hot: #6ea8ff;
+  --tl-stage-analyst: #b794f4;
+  --tl-stage-docs: #4fd1c5;
+  --tl-stage-recorded: #68d391;
+  --tl-stage-verified: #4ade9a;
+  --tl-stage-closed: #9aa9a0;
+  --tl-shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+  --tl-shadow-pop: 0 12px 32px rgb(0 0 0 / 0.55);
 }
 
 @theme inline {
@@ -103,8 +140,8 @@
   --color-tl-fresh-red: var(--tl-fresh-red);
   --color-tl-wait: var(--tl-wait);
 
-  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 
   --radius-control: var(--tl-radius-control);
   --radius-card: var(--tl-radius-card);
@@ -156,10 +193,10 @@ body {
   outline-offset: 2px;
 }
 
-/* Numbers and titles: Archivo, upright and firm */
+/* Numbers and titles: Inter semibold with tight tracking */
 @utility tl-display {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.02em;
 }
 
@@ -169,7 +206,7 @@ body {
 
 .tl-arena {
   background:
-    radial-gradient(60% 40% at 50% 22%, rgb(124 77 255 / 0.18), transparent 70%),
+    radial-gradient(60% 40% at 50% 22%, rgb(14 159 87 / 0.18), transparent 70%),
     linear-gradient(to bottom, var(--tl-arena-top), var(--tl-arena-bottom));
   min-height: 100dvh;
 }
@@ -203,7 +240,7 @@ body {
 /* The Arena (DESIGN.md sections 8 and 9) */
 :root {
   /* --tl-win is too dark to read on the Arena's purple, so feed amounts use a lighter green there. */
-  --tl-win-on-dark: #5ee0ad;
+  --tl-win-on-dark: #5ee0a0;
 }
 
 /* Lanes fill from zero when the Arena opens; a verified deposit makes the fill glide to its new width. */

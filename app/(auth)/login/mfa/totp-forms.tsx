@@ -60,7 +60,7 @@ export function EnrollTotp({ next }: { next: string }) {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={enrolment.qrCode}
-          alt="QR code to add Trading Labs CRM to your authenticator app"
+          alt="QR code to add QuantraPro to your authenticator app"
           width={168}
           height={168}
           className="rounded-control border border-tl-line bg-white p-2"

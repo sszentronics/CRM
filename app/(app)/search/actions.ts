@@ -6,6 +6,7 @@ import { normalisePhone } from "@/lib/format/phone";
 import { normaliseCnic } from "@/lib/kyc/fields";
 import type { Stage } from "@/lib/leads/stages";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getWorkspace } from "@/lib/workspace/get";
 import { createClient } from "@/lib/supabase/server";
 
 export type SearchHit = { id: string; full_name: string; phone: string; stage: Stage };
@@ -29,7 +30,7 @@ export async function searchLeads(query: string, limit = LIMIT): Promise<SearchR
 
   const ctx = await getSessionContext();
   const profile = ctx?.profile;
-  if (!ctx || !profile?.is_active || (needsMfa(profile.role) && ctx.aal !== "aal2")) return { hits: [], elsewhere: false };
+  if (!ctx || !profile?.is_active || (needsMfa(profile.role, profile.plan) && ctx.aal !== "aal2")) return { hits: [], elsewhere: false };
 
   const supabase = await createClient();
   const select = "id, full_name, phone, stage";
@@ -40,7 +41,8 @@ export async function searchLeads(query: string, limit = LIMIT): Promise<SearchR
     const { data } = await supabase.from("kyc_profiles").select("lead:leads (id, full_name, phone, stage)").eq("cnic_number", cnic).limit(1);
     const hit = (data?.[0] as unknown as { lead: SearchHit | null } | undefined)?.lead;
     if (hit) return { hits: [hit], elsewhere: false };
-    const { data: owner } = await createAdminClient().rpc("lead_with_cnic", { p_cnic: cnic });
+    const workspace = await getWorkspace();
+    const { data: owner } = await createAdminClient().rpc("lead_with_cnic", { p_workspace: workspace?.id, p_cnic: cnic });
     return { hits: [], elsewhere: !!owner };
   }
 
@@ -53,7 +55,8 @@ export async function searchLeads(query: string, limit = LIMIT): Promise<SearchR
       const { data } = await supabase.from("leads").select(select).eq("phone", full).limit(1);
       if (data && data.length > 0) return { hits: data as SearchHit[], elsewhere: false };
       // Not visible to this user: say only that it exists.
-      const { data: exists } = await createAdminClient().rpc("existing_lead_phones", { phones: [full] });
+      const workspace = await getWorkspace();
+      const { data: exists } = await createAdminClient().rpc("existing_lead_phones", { p_workspace: workspace?.id, phones: [full] });
       if (Array.isArray(exists) && exists.length > 0) return { hits: [], elsewhere: true };
       // Not an exact number we hold. A foreign number typed without "+" is read as Pakistani above,
       // so fall through and match the digits anywhere in the stored phone as well.

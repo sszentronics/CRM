@@ -1,3 +1,4 @@
+import { scoped } from "../../../scripts/scoped-client.mjs";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
@@ -54,9 +55,11 @@ export function loadEnv() {
   return { url, anon, service };
 }
 
+/** The service role has no signed-in workspace, so inserts are stamped with Trading Labs, where the e2e accounts live. */
 export function serviceClient() {
   const { url, service } = loadEnv();
-  return createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } });
+  const client = createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } });
+  return scoped(client) as typeof client;
 }
 
 export function anonClient() {
