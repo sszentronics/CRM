@@ -31,13 +31,6 @@ export function WorkspaceScreen({ workspace, requests }: { workspace: Workspace;
         }
       />
 
-      {workspace.slug ? (
-        <Card>
-          <CardHeader title="Your sign-in page" description="Share this address with your team. It opens a sign-in page with your name, logo and colours." />
-          <code className="rounded-control bg-tl-raised px-3 py-2 text-body text-tl-text">/c/{workspace.slug}</code>
-        </Card>
-      ) : null}
-
       {!isClient && workspace.product !== "crm" ? (
         <Card>
           <CardHeader title="Choose your setup" description="Start with the default CRM now, or ask us for a custom site." />

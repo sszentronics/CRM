@@ -5,9 +5,8 @@
 // Creates 1 Superadmin, 1 Admin, 4 teams (Falcons, Markhors, Shaheens, Leopards) each with a Team Lead and 2 agents,
 // 2 analysts, 2 brokers, 200 leads spread across every stage, and about a month of deposits.
 //
-// Safety: it refuses to run against anything but a local database (127.0.0.1 or localhost) unless you set
-// SEED_ALLOW_REMOTE=trading-labs on purpose, and it does nothing if the demo has already been seeded. The data goes
-// into the Trading Labs workspace. SEED_DOMAIN changes the email domain (default demo.tradinglabs.test). The demo password comes from SEED_PASSWORD, or is generated and written to
+// Safety: it refuses to run against anything but a local database (127.0.0.1 or localhost), and it does nothing if
+// the demo has already been seeded. The demo password comes from SEED_PASSWORD, or is generated and written to
 // .seed-credentials.local (git-ignored). It is never printed.
 import { randomBytes } from "node:crypto";
 import { existsSync, writeFileSync } from "node:fs";
@@ -23,14 +22,13 @@ if (!url || !serviceKey) {
   process.exit(1);
 }
 const host = new URL(url).hostname;
-const isLocal = ["127.0.0.1", "localhost", "::1", "[::1]"].includes(host);
-if (!isLocal && process.env.SEED_ALLOW_REMOTE !== "trading-labs") {
-  console.error(`Refusing to seed demo data into ${host}. Local databases only, unless SEED_ALLOW_REMOTE=trading-labs is set.`);
+if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(host)) {
+  console.error(`Refusing to seed demo data into ${host}. This script is for a local database only.`);
   process.exit(1);
 }
 
 const db = scoped(createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } }));
-const DOMAIN = process.env.SEED_DOMAIN || "demo.tradinglabs.test";
+const DOMAIN = "demo.tradinglabs.test";
 const password = process.env.SEED_PASSWORD || randomBytes(12).toString("base64url");
 if (password.length < 10) {
   console.error("SEED_PASSWORD must be at least 10 characters.");

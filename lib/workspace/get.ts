@@ -7,7 +7,6 @@ export type Plan = "client" | "trial";
 
 export type Workspace = {
   id: string;
-  slug: string | null;
   name: string;
   plan: Plan;
   trialEndsAt: string | null;
@@ -18,7 +17,6 @@ export type Workspace = {
 
 type Row = {
   id: string;
-  slug: string | null;
   name: string;
   plan: Plan;
   trial_ends_at: string | null;
@@ -27,12 +25,11 @@ type Row = {
   logo_path: string | null;
 };
 
-export const WORKSPACE_COLUMNS = "id, slug, name, plan, trial_ends_at, product, theme, logo_path";
+export const WORKSPACE_COLUMNS = "id, name, plan, trial_ends_at, product, theme, logo_path";
 
 export function toWorkspace(row: Row): Workspace {
   return {
     id: row.id,
-    slug: row.slug,
     name: row.name,
     plan: row.plan,
     trialEndsAt: row.trial_ends_at,
