@@ -21,7 +21,7 @@ export function NavLinks({ role, platform, onNavigate }: { role: Role; platform:
     <div className="flex flex-col gap-5">
       {groups.map((group) => (
         <div key={group.label} className="flex flex-col gap-0.5">
-          <p className="px-3 pb-1 text-small font-semibold text-tl-brand-muted">{group.label}</p>
+          <p className="px-3 pb-1 text-small font-semibold text-white">{group.label}</p>
           <ul className="flex flex-col gap-0.5">
             {group.items.map((item) => {
               const active = item.href === current;
@@ -35,7 +35,7 @@ export function NavLinks({ role, platform, onNavigate }: { role: Role; platform:
                       "flex h-9 items-center gap-3 rounded-control px-3 text-body font-medium transition-colors",
                       active
                         ? "bg-white text-tl-brand"
-                        : "text-tl-brand-muted hover:bg-tl-brand-raised hover:text-tl-brand-text",
+                        : "text-white hover:bg-tl-brand-raised",
                     )}
                   >
                     <NavIcon name={item.icon} className="size-4 shrink-0" />

@@ -69,3 +69,4 @@ lan-server.log
 /push-*.bat
 push-log.txt
 reset-log.txt
+/credentials.local.html
